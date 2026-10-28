@@ -1,0 +1,16 @@
+[
+  {
+    "demo": false,
+    "port": 8765,
+    "existing_rows_preserved": true,
+    "integrity": "ok",
+    "backup": "before-client-panel-production-1793089228824265300.zip"
+  },
+  {
+    "demo": true,
+    "port": 8766,
+    "existing_rows_preserved": true,
+    "integrity": "ok",
+    "backup": "before-client-panel-demo-1793089232324013000.zip"
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "database": "data",
+    "backup": "before-account-display-names-data-1793007108450643100.zip",
+    "changes": [],
+    "account_identity_preserved": true
+  },
+  {
+    "database": "demo-data",
+    "backup": "before-account-display-names-demo-data-1793007108450643100.zip",
+    "changes": [
+      {
+        "id": 1,
+        "username": "demo1",
+        "before": "演示操作员1",
+        "after": "吕"
+      },
+      {
+        "id": 2,
+        "username": "demo2",
+        "before": "演示操作员2",
+        "after": "会计1"
+      },
+      {
+        "id": 3,
+        "username": "demo3",
+        "before": "演示操作员3",
+        "after": "会计2"
+      }
+    ],
+    "account_identity_preserved": true
+  }
+]

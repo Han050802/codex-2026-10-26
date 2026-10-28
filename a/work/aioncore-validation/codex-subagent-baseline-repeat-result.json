@@ -1,0 +1,469 @@
+{
+  "label": "codex-subagent-baseline-repeat",
+  "started_at": "2026-10-26T10:27:03.022496+00:00",
+  "steps": [
+    {
+      "step": "create",
+      "status": 201,
+      "response": {
+        "success": true,
+        "data": {
+          "id": "db5de0de",
+          "name": "AionUi subagent diagnostic codex-subagent-bridge",
+          "type": "acp",
+          "status": "pending",
+          "source": "aionui",
+          "pinned": false,
+          "created_at": 1793010423096,
+          "modified_at": 1793010423096,
+          "extra": {
+            "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\codex-subagent-bridge",
+            "backend": "codex",
+            "agent_id": "8e1acf31",
+            "agent_source": "builtin",
+            "skills": [
+              "aionui-config",
+              "conversation-create",
+              "cron",
+              "officecli",
+              "session-message",
+              "skill-creator"
+            ],
+            "mcp_server_ids": [],
+            "mcp_servers": [],
+            "current_mode_id": "default",
+            "mcp_statuses": [],
+            "is_temporary_workspace": false
+          }
+        }
+      }
+    },
+    {
+      "step": "ensure",
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "recovered": true,
+          "config_options": [
+            {
+              "id": "mode",
+              "name": "Mode",
+              "category": "mode",
+              "type": "select",
+              "current_value": "auto",
+              "options": [
+                {
+                  "value": "read-only",
+                  "name": "Read Only",
+                  "description": "Codex can read files in the current workspace. Approval is required to edit files or access the internet."
+                },
+                {
+                  "value": "auto",
+                  "name": "Default",
+                  "description": "Codex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)"
+                },
+                {
+                  "value": "full-access",
+                  "name": "Full Access",
+                  "description": "Codex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using."
+                }
+              ]
+            },
+            {
+              "id": "model",
+              "name": "Model",
+              "category": "model",
+              "type": "select",
+              "current_value": "gpt-6.1-sol",
+              "options": [
+                {
+                  "value": "gpt-6.1-sol",
+                  "name": "GPT-6.1-Sol"
+                },
+                {
+                  "value": "gpt-6-astra",
+                  "name": "GPT-6-Astra"
+                },
+                {
+                  "value": "gpt-6-sol",
+                  "name": "GPT-6-Sol"
+                },
+                {
+                  "value": "gpt-6-luna",
+                  "name": "GPT-6-Luna"
+                },
+                {
+                  "value": "gpt-5.6-sol",
+                  "name": "GPT-5.6-Sol"
+                },
+                {
+                  "value": "gpt-5.6-terra",
+                  "name": "GPT-5.6-Terra"
+                },
+                {
+                  "value": "gpt-5.6-luna",
+                  "name": "GPT-5.6-Luna"
+                }
+              ]
+            },
+            {
+              "id": "reasoning_effort",
+              "name": "Thinking",
+              "category": "thought_level",
+              "type": "select",
+              "options": [
+                {
+                  "value": "low",
+                  "name": "low"
+                },
+                {
+                  "value": "medium",
+                  "name": "medium"
+                },
+                {
+                  "value": "high",
+                  "name": "high"
+                },
+                {
+                  "value": "xhigh",
+                  "name": "xhigh"
+                },
+                {
+                  "value": "max",
+                  "name": "max"
+                },
+                {
+                  "value": "ultra",
+                  "name": "ultra"
+                }
+              ]
+            }
+          ],
+          "runtime": {
+            "state": "idle",
+            "can_send_message": true,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": false,
+            "pending_confirmations": 0,
+            "turn_id": null,
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    },
+    {
+      "step": "send",
+      "status": 202,
+      "response": {
+        "success": true,
+        "data": {
+          "msg_id": "f84c5cc5",
+          "turn_id": "turn_2b3fcd7b",
+          "runtime": {
+            "state": "starting",
+            "can_send_message": false,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": true,
+            "pending_confirmations": 0,
+            "turn_id": "turn_2b3fcd7b",
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    },
+    {
+      "step": "followup_send",
+      "status": 202,
+      "response": {
+        "success": true,
+        "data": {
+          "msg_id": "d89a5339",
+          "turn_id": "turn_105f831a",
+          "runtime": {
+            "state": "starting",
+            "can_send_message": false,
+            "has_task": true,
+            "task_status": "finished",
+            "is_processing": true,
+            "pending_confirmations": 0,
+            "turn_id": "turn_105f831a",
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "seconds": 0.016,
+      "time": "2026-10-26T10:27:03.368750+00:00",
+      "status": "pending",
+      "parent_marker": false,
+      "left_text_count": 0,
+      "types": []
+    },
+    {
+      "seconds": 0.25,
+      "time": "2026-10-26T10:27:03.599059+00:00",
+      "status": "pending",
+      "parent_marker": false,
+      "left_text_count": 0,
+      "types": [
+        [
+          "tips",
+          "finish"
+        ]
+      ]
+    },
+    {
+      "seconds": 13.657,
+      "time": "2026-10-26T10:27:17.012574+00:00",
+      "status": "finished",
+      "parent_marker": false,
+      "left_text_count": 1,
+      "types": [
+        [
+          "tips",
+          "finish"
+        ],
+        [
+          "text",
+          "finish"
+        ]
+      ]
+    }
+  ],
+  "conversation_id": "db5de0de",
+  "first_finished_seconds": 13.657,
+  "premature_finished": true,
+  "codex_session_id": "01a177bf-d780-7b31-981e-bdf4eee47cd4",
+  "raw_parent_complete": {
+    "timestamp": "2026-10-26T10:27:19.415Z",
+    "payload": {
+      "type": "task_complete",
+      "root_turn_id": "01a177bf-d827-7520-b000-9992570587b9",
+      "turn_id": "01a177bf-d827-7520-b000-9992570587b9",
+      "last_agent_message": "PARENT_DIAGNOSTIC_OK",
+      "started_at": 1793010423,
+      "completed_at": 1793010439,
+      "duration_ms": 15541,
+      "time_to_first_token_ms": 5698
+    }
+  },
+  "messages": {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": "f84c5cc5",
+          "conversation_id": "db5de0de",
+          "msg_id": "f84c5cc5",
+          "type": "text",
+          "content": {
+            "content": "This is an isolated agent lifecycle diagnostic. Use the available collaboration tool to spawn exactly one child subagent. Instruct that child: Reply with exactly CHILD_DIAGNOSTIC_OK, do not spawn agents, use tools, access the network, or read or modify any files. You, the parent, must wait for that child to finish using only collaboration tools if needed. After receiving its result, reply with exactly PARENT_DIAGNOSTIC_OK as your final answer. Do not use shell, browser, file, or network tools. The child final is not your final; you must emit the parent final marker yourself."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010423341
+        },
+        {
+          "id": "750407f5",
+          "conversation_id": "db5de0de",
+          "msg_id": null,
+          "type": "tips",
+          "content": {
+            "content": "The installed codex is newer than the version AionUi verified. It should still work; report anything that behaves oddly. (installed codex-cli 0.163.0 / verified by AionUi: 0.151.0)",
+            "type": "info",
+            "code": "CLI_VERSION_NEWER",
+            "params": {
+              "cli": "codex",
+              "reported": "codex-cli 0.163.0",
+              "verified": "0.151.0"
+            },
+            "supersedes_key": null
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010423448
+        },
+        {
+          "id": "feb52212",
+          "conversation_id": "db5de0de",
+          "msg_id": "feb52212",
+          "type": "text",
+          "content": {
+            "content": "I’ll spawn one child and wait for its result.\nCHILD_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010429572,
+          "backend_turn_id": "01a177bf-f2f8-7181-bab5-69790c1aa27d"
+        }
+      ],
+      "oldest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwNDIzMzQxLCJpZCI6ImY4NGM1Y2M1In0",
+      "newest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwNDI5NTcyLCJpZCI6ImZlYjUyMjEyIn0",
+      "has_more_before": false,
+      "has_more_after": false
+    }
+  },
+  "conversation": {
+    "success": true,
+    "data": {
+      "id": "db5de0de",
+      "name": "AionUi subagent diagnostic codex-subagent-bridge",
+      "type": "acp",
+      "status": "finished",
+      "runtime": {
+        "state": "idle",
+        "can_send_message": true,
+        "has_task": true,
+        "task_status": "finished",
+        "is_processing": false,
+        "pending_confirmations": 0,
+        "turn_id": null,
+        "supports_midturn_delivery": true
+      },
+      "source": "aionui",
+      "pinned": false,
+      "project_id": "project_01a177bf-d548-79c2-b7d0-2940f10a8a48",
+      "fork_capability": {
+        "at_turn": true
+      },
+      "prompt_capability": {
+        "image": true,
+        "audio": false
+      },
+      "created_at": 1793010423096,
+      "modified_at": 1793010436894,
+      "extra": {
+        "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\codex-subagent-bridge",
+        "backend": "codex",
+        "agent_id": "8e1acf31",
+        "agent_source": "builtin",
+        "skills": [
+          "aionui-config",
+          "conversation-create",
+          "cron",
+          "officecli",
+          "session-message",
+          "skill-creator"
+        ],
+        "mcp_server_ids": [],
+        "mcp_servers": [],
+        "current_mode_id": "default",
+        "mcp_statuses": [],
+        "is_temporary_workspace": false
+      }
+    }
+  },
+  "parent_marker_missing": true,
+  "followup_ok": true,
+  "final_messages": {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": "f84c5cc5",
+          "conversation_id": "db5de0de",
+          "msg_id": "f84c5cc5",
+          "type": "text",
+          "content": {
+            "content": "This is an isolated agent lifecycle diagnostic. Use the available collaboration tool to spawn exactly one child subagent. Instruct that child: Reply with exactly CHILD_DIAGNOSTIC_OK, do not spawn agents, use tools, access the network, or read or modify any files. You, the parent, must wait for that child to finish using only collaboration tools if needed. After receiving its result, reply with exactly PARENT_DIAGNOSTIC_OK as your final answer. Do not use shell, browser, file, or network tools. The child final is not your final; you must emit the parent final marker yourself."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010423341
+        },
+        {
+          "id": "750407f5",
+          "conversation_id": "db5de0de",
+          "msg_id": null,
+          "type": "tips",
+          "content": {
+            "content": "The installed codex is newer than the version AionUi verified. It should still work; report anything that behaves oddly. (installed codex-cli 0.163.0 / verified by AionUi: 0.151.0)",
+            "type": "info",
+            "code": "CLI_VERSION_NEWER",
+            "params": {
+              "cli": "codex",
+              "reported": "codex-cli 0.163.0",
+              "verified": "0.151.0"
+            },
+            "supersedes_key": null
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010423448
+        },
+        {
+          "id": "feb52212",
+          "conversation_id": "db5de0de",
+          "msg_id": "feb52212",
+          "type": "text",
+          "content": {
+            "content": "I’ll spawn one child and wait for its result.\nCHILD_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010429572,
+          "backend_turn_id": "01a177bf-f2f8-7181-bab5-69790c1aa27d"
+        },
+        {
+          "id": "15ef51c0",
+          "conversation_id": "db5de0de",
+          "msg_id": "15ef51c0",
+          "type": "text",
+          "content": {
+            "content": "PARENT_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010439302
+        },
+        {
+          "id": "d89a5339",
+          "conversation_id": "db5de0de",
+          "msg_id": "d89a5339",
+          "type": "text",
+          "content": {
+            "content": "Reply with exactly FOLLOWUP_DIAGNOSTIC_OK and nothing else. Do not use tools or modify files."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010442787
+        },
+        {
+          "id": "56103536",
+          "conversation_id": "db5de0de",
+          "msg_id": "56103536",
+          "type": "text",
+          "content": {
+            "content": "FOLLOWUP_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010444748,
+          "backend_turn_id": "01a177c0-222b-7fe2-a46c-0cba241e12ad"
+        }
+      ],
+      "oldest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwNDIzMzQxLCJpZCI6ImY4NGM1Y2M1In0",
+      "newest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwNDQ0NzQ4LCJpZCI6IjU2MTAzNTM2In0",
+      "has_more_before": false,
+      "has_more_after": false
+    }
+  },
+  "child_marker_leaked": true,
+  "finished_at": "2026-10-26T10:27:25.353594+00:00",
+  "setup_note": "Override initial PUT used object env_override and was rejected. This run used unmodified Codex. Correct env_override array was installed only after this run completed."
+}

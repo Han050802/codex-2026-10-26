@@ -1,0 +1,7 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><link rel="stylesheet" href="/outputs/yidaizhang-local/public/styles.css"><link rel="stylesheet" href="/outputs/yidaizhang-local/public/reconcile.css"></head><body><main id="root"></main><script type="module">
+import {renderReconcile,bindReconcile} from '/outputs/yidaizhang-local/public/reconcile.js';
+window.calls=[];window.alerts=[];window.alert=x=>alerts.push(x);
+const client=[{id:7,name:'合成公司'}];
+const api=async(path,opts={})=>{calls.push({path,body:opts.body});if(path==='/api/reconcile/match')return {matches:[{transaction_index:0,invoice_index:0,status:'matched',reasons:[]}]};if(path.startsWith('/api/books/'))return {accounts:[{code:'1002',name:'银行存款'},{code:'100201',name:'银行存款-基本户'},{code:'5001',name:'主营业务收入'}]};if(path==='/api/reconcile/save'){if(!opts.body.voucher.duplicate_review_note){const e=new Error('发现相似凭证，请核对是否重复');e.details={code:'possible_duplicate',candidates:[{date:'2026-09-01',number:'记-001',summary:'其他业务'}]};throw e;}return {id:1,voucher_id:12};}if(path.startsWith('/api/reconcile/records?'))return {records:[{id:25,status:'matched',transaction:{date:'2026-09-03',counterparty:'历史合成公司',amount:'100'},invoice:{number:'历史发票',amount:'100'}}]};if(path.endsWith('/post'))return {id:25,voucher_id:13};throw Error('意外请求 '+path);};
+const root=document.querySelector('#root');root.innerHTML=renderReconcile(client);bindReconcile(root,api,client);
+</script></body></html>

@@ -1,0 +1,1388 @@
+[
+  {
+    "batch": 6,
+    "seconds": 3.62,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 1,
+    "seconds": 2.48,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 2,
+    "seconds": 3.22,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 3,
+    "seconds": 3.84,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 6,
+    "seconds": 3.65,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 3,
+    "seconds": 2.35,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 2,
+    "seconds": 2.22,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 1,
+    "seconds": 2.17,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  },
+  {
+    "batch": 6,
+    "seconds": 3.87,
+    "fields": {
+      "account_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "transactions": [
+        {
+          "date": "2026-09-01",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260901",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-02",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260902",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-03",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260903",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-04",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260904",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-05",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260905",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-06",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260906",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-07",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260907",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-08",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260908",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-09",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260909",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-10",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260910",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-11",
+          "amount": "-112000.00",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260911",
+            "amount": "-112000.00",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        },
+        {
+          "date": "2026-09-12",
+          "amount": "37479.48",
+          "counterparty": "北京超建邦科技有限公司",
+          "description": "服务费",
+          "needs_review": true,
+          "source": {
+            "date": "20260912",
+            "amount": "37479.48",
+            "counterparty": "北京超建邦科技有限公司"
+          }
+        }
+      ]
+    },
+    "rotation": 0
+  }
+]

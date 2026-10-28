@@ -1,0 +1,388 @@
+{
+  "success": true,
+  "data": {
+    "schema_version": 1,
+    "contract": "agent-facing-diagnose-cli",
+    "stability": "stable",
+    "input": {
+      "default_mode": "stdin_json",
+      "business_flags": false,
+      "selectors": {
+        "conversation_id": {
+          "current": "resolve from AIONUI_CONVERSATION_ID",
+          "literal": "treat as conversation id"
+        }
+      }
+    },
+    "output": {
+      "stdout": "JSON envelope",
+      "stderr": "single stable DIAGNOSE_... error line",
+      "success_shape": {
+        "success": true,
+        "data": {},
+        "meta": {
+          "schema_version": 1
+        }
+      }
+    },
+    "runtime_context": {
+      "primary": "AIONUI_CONVERSATION_ID",
+      "environment": [
+        "AIONUI_BASE_URL",
+        "AIONUI_CONVERSATION_ID",
+        "AIONUI_USER_ID"
+      ],
+      "optional_environment": [
+        "AIONUI_LOG_DIR"
+      ]
+    },
+    "safety": {
+      "read_only": true,
+      "redacted_by_default": [
+        "provider api keys",
+        "Authorization headers",
+        "MCP headers",
+        "environment variables",
+        "tokens",
+        "passwords",
+        "secrets"
+      ],
+      "http_escape_hatch": {
+        "command": "diagnose http get",
+        "method": "GET only",
+        "allowed_paths": [
+          "/health",
+          "/api/..."
+        ],
+        "prefer_named_commands": true
+      }
+    },
+    "domains": [
+      {
+        "name": "core",
+        "commands": [
+          {
+            "path": [
+              "capabilities"
+            ],
+            "command": "diagnose capabilities",
+            "description": "Print this agent-readable capability contract.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "context"
+            ],
+            "command": "diagnose context",
+            "description": "Read current runtime context.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "health"
+            ],
+            "command": "diagnose health",
+            "description": "Read backend health.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "overview"
+            ],
+            "command": "diagnose overview",
+            "description": "Read a cross-domain diagnostic snapshot.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "conversations",
+        "commands": [
+          {
+            "path": [
+              "conversations",
+              "list"
+            ],
+            "command": "diagnose conversations list",
+            "description": "List conversations with runtime summary.",
+            "input": "optional_stdin_json",
+            "stdin_fields": [
+              "limit"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "conversations",
+              "get"
+            ],
+            "command": "diagnose conversations get",
+            "description": "Read one conversation and stuck/waiting hints.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "conversation_id"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "conversations",
+              "messages"
+            ],
+            "command": "diagnose conversations messages",
+            "description": "Read conversation messages.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "conversation_id",
+              "limit",
+              "errors_only"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "providers",
+        "commands": [
+          {
+            "path": [
+              "providers",
+              "summary"
+            ],
+            "command": "diagnose providers summary",
+            "description": "Summarize provider model health.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "mcp",
+        "commands": [
+          {
+            "path": [
+              "mcp",
+              "summary"
+            ],
+            "command": "diagnose mcp summary",
+            "description": "Summarize MCP servers and enabled servers with zero tools.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "cron",
+        "commands": [
+          {
+            "path": [
+              "cron",
+              "summary"
+            ],
+            "command": "diagnose cron summary",
+            "description": "Summarize scheduled jobs and failing last run state.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "teams",
+        "commands": [
+          {
+            "path": [
+              "teams",
+              "summary"
+            ],
+            "command": "diagnose teams summary",
+            "description": "Summarize teams and member conversation states.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "logs",
+        "commands": [
+          {
+            "path": [
+              "logs",
+              "tail"
+            ],
+            "command": "diagnose logs tail",
+            "description": "Tail aioncore logs from AIONUI_LOG_DIR or stdin log_dir.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "log_dir",
+              "lines",
+              "errors_only",
+              "conversation_id"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": false,
+            "requires_context": [],
+            "redacted_fields": [
+              "Authorization",
+              "token",
+              "secret",
+              "password"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "http",
+        "commands": [
+          {
+            "path": [
+              "http",
+              "get"
+            ],
+            "command": "diagnose http get",
+            "description": "Controlled GET escape hatch for uncovered diagnostic reads.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "path",
+              "reason"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "escape_hatch": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "headers",
+              "env",
+              "token",
+              "secret",
+              "password"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "schema_version": 1
+  }
+}

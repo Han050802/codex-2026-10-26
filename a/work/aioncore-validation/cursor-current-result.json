@@ -1,0 +1,407 @@
+{
+  "backend": "cursor",
+  "label": "cursor-current",
+  "started_at": "2026-10-26T10:21:27.604402+00:00",
+  "create_request": {
+    "type": "acp",
+    "name": "AionUi isolated diagnostic cursor-current",
+    "extra": {
+      "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\cursor-current",
+      "backend": "cursor",
+      "agent_id": "a0dfb1ec",
+      "agent_source": "builtin",
+      "skills": [],
+      "mcp_server_ids": [],
+      "mcp_servers": [],
+      "current_mode_id": "default"
+    }
+  },
+  "steps": [
+    {
+      "step": "create",
+      "status": 201,
+      "response": {
+        "success": true,
+        "data": {
+          "id": "4a72d27a",
+          "name": "AionUi isolated diagnostic cursor-current",
+          "type": "acp",
+          "status": "pending",
+          "source": "aionui",
+          "pinned": false,
+          "created_at": 1793010087669,
+          "modified_at": 1793010087669,
+          "extra": {
+            "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\cursor-current",
+            "backend": "cursor",
+            "agent_id": "a0dfb1ec",
+            "agent_source": "builtin",
+            "skills": [
+              "aionui-config",
+              "conversation-create",
+              "cron",
+              "officecli",
+              "session-message",
+              "skill-creator"
+            ],
+            "mcp_server_ids": [],
+            "mcp_servers": [],
+            "current_mode_id": "default",
+            "mcp_statuses": [],
+            "is_temporary_workspace": false
+          }
+        }
+      }
+    },
+    {
+      "step": "ensure",
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "recovered": true,
+          "config_options": [
+            {
+              "id": "mode",
+              "name": "Mode",
+              "description": "Controls how the agent executes tasks",
+              "category": "mode",
+              "type": "select",
+              "current_value": "agent",
+              "options": [
+                {
+                  "value": "agent",
+                  "name": "Agent",
+                  "description": "Full agent capabilities with tool access"
+                },
+                {
+                  "value": "plan",
+                  "name": "Plan",
+                  "description": "Read-only mode for planning and designing before implementation"
+                },
+                {
+                  "value": "ask",
+                  "name": "Ask",
+                  "description": "Q&A mode - no edits or command execution"
+                }
+              ]
+            },
+            {
+              "id": "model",
+              "name": "Model",
+              "description": "Controls which model variant is used for responses",
+              "category": "model",
+              "type": "select",
+              "current_value": "default[]",
+              "options": [
+                {
+                  "value": "default[]",
+                  "name": "Auto"
+                },
+                {
+                  "value": "grok-4.7[context=256k,reasoning_effort=high,fast=true]",
+                  "name": "grok-4.7"
+                },
+                {
+                  "value": "grok-4.6[effort=high,fast=true]",
+                  "name": "grok-4.6"
+                },
+                {
+                  "value": "composer-2.5[fast=true]",
+                  "name": "composer-2.5"
+                },
+                {
+                  "value": "claude-opus-5-5[context=300k,effort=medium,fast=false]",
+                  "name": "claude-opus-5-5"
+                },
+                {
+                  "value": "claude-opus-5[thinking=true,context=300k,effort=high,fast=false]",
+                  "name": "claude-opus-5"
+                },
+                {
+                  "value": "claude-opus-4-8[thinking=true,context=300k,effort=high,fast=false]",
+                  "name": "claude-opus-4-8"
+                },
+                {
+                  "value": "gemini-4-argon[reasoning_effort=medium]",
+                  "name": "gemini-4-argon"
+                },
+                {
+                  "value": "muse-wonder-1.0[context=300k,reasoning_effort=high]",
+                  "name": "muse-wonder-1.0"
+                },
+                {
+                  "value": "gpt-5.6-sol[context=272k,reasoning=medium,fast=false]",
+                  "name": "gpt-5.6-sol"
+                },
+                {
+                  "value": "gpt-5.5[context=272k,reasoning=medium,fast=false]",
+                  "name": "gpt-5.5"
+                },
+                {
+                  "value": "claude-fable-5-1[thinking=true,context=300k,effort=high]",
+                  "name": "claude-fable-5-1"
+                },
+                {
+                  "value": "claude-fable-5[thinking=true,context=300k,effort=high]",
+                  "name": "claude-fable-5"
+                },
+                {
+                  "value": "grok-4.5[effort=high,fast=true]",
+                  "name": "grok-4.5"
+                },
+                {
+                  "value": "gemini-3.8-flash[reasoning_effort=high]",
+                  "name": "gemini-3.8-flash"
+                },
+                {
+                  "value": "gemini-3.7-flash[effort=high]",
+                  "name": "gemini-3.7-flash"
+                },
+                {
+                  "value": "muse-spark-1.3[context=300k,effort=high]",
+                  "name": "muse-spark-1.3"
+                },
+                {
+                  "value": "gpt-5.6-terra[context=272k,reasoning=medium,fast=false]",
+                  "name": "gpt-5.6-terra"
+                },
+                {
+                  "value": "claude-sonnet-5-5[context=300k,reasoning_effort=high]",
+                  "name": "claude-sonnet-5-5"
+                },
+                {
+                  "value": "claude-sonnet-5[thinking=true,context=300k,effort=high]",
+                  "name": "claude-sonnet-5"
+                },
+                {
+                  "value": "claude-sonnet-4-6[thinking=true,context=200k,effort=medium]",
+                  "name": "claude-sonnet-4-6"
+                },
+                {
+                  "value": "gpt-5.3-codex[reasoning=medium,fast=false]",
+                  "name": "gpt-5.3-codex"
+                },
+                {
+                  "value": "claude-opus-4-7[thinking=true,context=300k,effort=xhigh,fast=false]",
+                  "name": "claude-opus-4-7"
+                },
+                {
+                  "value": "gpt-5.4[context=272k,reasoning=medium,fast=false]",
+                  "name": "gpt-5.4"
+                },
+                {
+                  "value": "claude-opus-4-6[thinking=true,context=200k,effort=high]",
+                  "name": "claude-opus-4-6"
+                },
+                {
+                  "value": "claude-opus-4-5[thinking=true]",
+                  "name": "claude-opus-4-5"
+                },
+                {
+                  "value": "gpt-5.2[reasoning=medium,fast=false]",
+                  "name": "gpt-5.2"
+                },
+                {
+                  "value": "gpt-5.6-luna[context=272k,reasoning=medium,fast=false]",
+                  "name": "gpt-5.6-luna"
+                },
+                {
+                  "value": "gemini-3.6-flash[effort=high]",
+                  "name": "gemini-3.6-flash"
+                },
+                {
+                  "value": "gemini-3.1-pro[]",
+                  "name": "gemini-3.1-pro"
+                },
+                {
+                  "value": "gpt-5.4-mini[reasoning=medium]",
+                  "name": "gpt-5.4-mini"
+                },
+                {
+                  "value": "gpt-5.4-nano[reasoning=medium]",
+                  "name": "gpt-5.4-nano"
+                },
+                {
+                  "value": "claude-haiku-5-5[thinking=true,context=300k,reasoning_effort=high]",
+                  "name": "claude-haiku-5-5"
+                },
+                {
+                  "value": "claude-haiku-4-5[thinking=true]",
+                  "name": "claude-haiku-4-5"
+                },
+                {
+                  "value": "claude-sonnet-4-5[thinking=true,context=200k]",
+                  "name": "claude-sonnet-4-5"
+                },
+                {
+                  "value": "gpt-5.1[reasoning=medium]",
+                  "name": "gpt-5.1"
+                },
+                {
+                  "value": "gemini-3-flash[]",
+                  "name": "gemini-3-flash"
+                },
+                {
+                  "value": "gemini-3.5-flash[]",
+                  "name": "gemini-3.5-flash"
+                },
+                {
+                  "value": "claude-sonnet-4[thinking=false,context=200k]",
+                  "name": "claude-sonnet-4"
+                },
+                {
+                  "value": "gpt-5-mini[]",
+                  "name": "gpt-5-mini"
+                },
+                {
+                  "value": "gemini-2.5-flash[]",
+                  "name": "gemini-2.5-flash"
+                },
+                {
+                  "value": "kimi-k3[reasoning=max]",
+                  "name": "kimi-k3"
+                },
+                {
+                  "value": "kimi-k2.7-code[]",
+                  "name": "kimi-k2.7-code"
+                },
+                {
+                  "value": "glm-5.2[reasoning=high]",
+                  "name": "glm-5.2"
+                },
+                {
+                  "value": "glm-5p3[reasoning=high]",
+                  "name": "glm-5p3"
+                },
+                {
+                  "value": "glm-5p3-flash[reasoning=high]",
+                  "name": "glm-5p3-flash"
+                }
+              ]
+            }
+          ],
+          "runtime": {
+            "state": "idle",
+            "can_send_message": true,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": false,
+            "pending_confirmations": 0,
+            "turn_id": null,
+            "supports_midturn_delivery": false
+          }
+        }
+      }
+    },
+    {
+      "step": "send",
+      "status": 202,
+      "response": {
+        "success": true,
+        "data": {
+          "msg_id": "ff9682c9",
+          "turn_id": "turn_5b13b00c",
+          "runtime": {
+            "state": "starting",
+            "can_send_message": false,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": true,
+            "pending_confirmations": 0,
+            "turn_id": "turn_5b13b00c",
+            "supports_midturn_delivery": false
+          }
+        }
+      }
+    }
+  ],
+  "conversation_id": "4a72d27a",
+  "conversation": {
+    "success": true,
+    "data": {
+      "id": "4a72d27a",
+      "name": "Connectivity Diagnostic",
+      "name_source": "agent",
+      "type": "acp",
+      "status": "finished",
+      "runtime": {
+        "state": "idle",
+        "can_send_message": true,
+        "has_task": true,
+        "task_status": "finished",
+        "is_processing": false,
+        "pending_confirmations": 0,
+        "turn_id": null,
+        "supports_midturn_delivery": false
+      },
+      "source": "aionui",
+      "pinned": false,
+      "project_id": "project_01a177ba-b704-7641-b241-a9989c414702",
+      "prompt_capability": {
+        "image": true,
+        "audio": false
+      },
+      "created_at": 1793010087669,
+      "modified_at": 1793010099761,
+      "extra": {
+        "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\cursor-current",
+        "backend": "cursor",
+        "agent_id": "a0dfb1ec",
+        "agent_source": "builtin",
+        "skills": [
+          "aionui-config",
+          "conversation-create",
+          "cron",
+          "officecli",
+          "session-message",
+          "skill-creator"
+        ],
+        "mcp_server_ids": [],
+        "mcp_servers": [],
+        "current_mode_id": "default",
+        "mcp_statuses": [],
+        "is_temporary_workspace": false
+      }
+    }
+  },
+  "messages": {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": "ff9682c9",
+          "conversation_id": "4a72d27a",
+          "msg_id": "ff9682c9",
+          "type": "text",
+          "content": {
+            "content": "This is a connectivity diagnostic. Reply with exactly AIONUI_DIAGNOSTIC_OK and nothing else. Do not use tools. Do not read, create, or modify any files."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010097702
+        },
+        {
+          "id": "e79d8420",
+          "conversation_id": "4a72d27a",
+          "msg_id": "e79d8420",
+          "type": "text",
+          "content": {
+            "content": "AIONUI_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010099336
+        }
+      ],
+      "oldest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwMDk3NzAyLCJpZCI6ImZmOTY4MmM5In0",
+      "newest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwMDk5MzM2LCJpZCI6ImU3OWQ4NDIwIn0",
+      "has_more_before": false,
+      "has_more_after": false
+    }
+  },
+  "diagnostic_ok": true,
+  "finished_at": "2026-10-26T10:21:41.773831+00:00"
+}

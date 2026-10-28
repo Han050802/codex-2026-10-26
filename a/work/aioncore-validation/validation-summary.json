@@ -1,0 +1,83 @@
+{
+  "verified_at": "2026-10-26T10:35:03.252190+00:00",
+  "scope": "Isolated local AionCore 0.2.2, dedicated test DB/workspace/logs; existing CLI auth only; no production configuration writes.",
+  "tests": [
+    {
+      "report": "codex-current-result.json",
+      "label": "codex-current",
+      "backend": "codex",
+      "conversation_id": "d569573e",
+      "diagnostic_ok": true
+    },
+    {
+      "report": "cursor-current-result.json",
+      "label": "cursor-current",
+      "backend": "cursor",
+      "conversation_id": "4a72d27a",
+      "diagnostic_ok": true
+    },
+    {
+      "report": "codex-subagent-baseline-result.json",
+      "label": "codex-subagent-baseline",
+      "conversation_id": "7c03fc17",
+      "premature_finished": true,
+      "parent_marker_missing": true,
+      "child_marker_leaked": true,
+      "followup_ok": true
+    },
+    {
+      "report": "codex-subagent-baseline-repeat-result.json",
+      "label": "codex-subagent-baseline-repeat",
+      "conversation_id": "db5de0de",
+      "premature_finished": true,
+      "parent_marker_missing": true,
+      "child_marker_leaked": true,
+      "followup_ok": true
+    },
+    {
+      "report": "codex-subagent-bridge-result.json",
+      "label": "codex-subagent-bridge",
+      "conversation_id": "8b6f255a",
+      "premature_finished": false,
+      "parent_marker_missing": false,
+      "child_marker_leaked": false,
+      "followup_ok": true
+    },
+    {
+      "report": "codex-subagent-bridge-resume-result.json",
+      "conversation_id": "8b6f255a",
+      "premature_finished": false,
+      "resume_ok": true,
+      "same_session": true,
+      "initial_probe_note": "Initial test stopped on stale conversation.status=finished before the resumed turn emitted its first event. Corrected by fresh turn_id terminal log and post-send assistant message; no new model request was made."
+    },
+    {
+      "report": "codex-subagent-deployed-final-result.json",
+      "label": "codex-subagent-deployed-final",
+      "conversation_id": "6c9535fe",
+      "premature_finished": false,
+      "parent_marker_missing": false,
+      "child_marker_leaked": false,
+      "followup_ok": true
+    }
+  ],
+  "deployed_bridge_sha256": "95EE62C0B93753DFD49A9B4D78949F08C9DA8C291EABAA3B1207E8F7150972BC",
+  "cleanup": {
+    "validation_pid": 20960,
+    "remaining_count": 0,
+    "test_port_listeners": 0,
+    "production": [
+      {
+        "Name": "AionUi.exe",
+        "ProcessId": 28216,
+        "ExecutablePath": "D:\\AIONUI\\AionUi.exe"
+      },
+      {
+        "Name": "aioncore.exe",
+        "ProcessId": 31112,
+        "ExecutablePath": "D:\\AIONUI\\resources\\bundled-aioncore\\win32-x64\\aioncore.exe"
+      }
+    ],
+    "finished_at": "2026-10-26T18:34:53.2943448+08:00"
+  }
+}

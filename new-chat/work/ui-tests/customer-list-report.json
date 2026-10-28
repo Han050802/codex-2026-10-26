@@ -1,0 +1,23 @@
+{
+  "scenarios": [
+    "exact thirteen columns, name-cell book entry, three row icons and conditional selection toolbar",
+    "single toolbar contains all ten main entry points, both local filters and working authorization/export menu entries",
+    "circular row arrow performs GET refresh without changing enabled or version",
+    "default 500 rows, explicit 50-row paging, partial header and all-filter selection preserve the correct cross-page ids",
+    "ascending/descending customer name sort remains compatible with selection by stable customer ids",
+    "industry, region, tax nature, accounting standard, four service statuses, accountant and real bookkeeping-state filters match persisted data",
+    "employee and assigned-book filters include actual accountant/assignment metadata without changing access rights",
+    "imported CSV list can be replaced, cleared and reset together with assigned-book filtering without altering customer records",
+    "CSV imported-name matching filters only existing records without writes, clears selection when changed and handles empty results",
+    "bulk industry updates only the two selected customers across pages through real versioned PATCH requests",
+    "three-user assignment list round-trips, explicit clear persists [] and all three real logins retain edit access with or without assignment",
+    "export dropdown generates a real CSV containing exactly the selected range",
+    "gear settings persist optional visibility while keeping mandatory selection/name/operation columns available",
+    "actual new customer form saves an automatically coded enabled customer with service status unset"
+  ],
+  "scenarioCount": 14,
+  "requests": 59,
+  "allPassed": true,
+  "safety": "Only disposable loopback demo200 fixture; refused live ports 8765/8766. No reference website or browser used.",
+  "limits": "Linkedom functional checks with real HTTP; screenshot geometry and visual matching are verified separately by root."
+}

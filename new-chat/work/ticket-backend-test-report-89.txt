@@ -1,0 +1,16 @@
+Ticket workflow backend verification summary
+Run date: 2026-10-26
+Workspace: C:/Users/Admin/Documents/Codex/2026-10-26/new-chat/outputs/yidaizhang-local
+Command: python -B -m unittest discover -s tests -q
+Exit code: 0
+Actual runner summary:
+----------------------------------------------------------------------
+Ran 89 tests in 28.677s
+
+OK
+
+Scope: original 73 tests plus 16 ticket workflow, VAT filing frequency, and local warning configuration tests.
+All database work used temporary directories. No runtime production/demo database was opened or modified.
+Coverage: authenticated/CSRF-protected HTTP routes, task/check CRUD, three-user editing, optimistic concurrency, server-recorded manual check identity/time, soft deletion/recycle/purge history protection, task completion independent of invoice data, additive schema initialization, optional VAT frequency CSV/default/version handling, configurable integer-fen warning thresholds, partial settings updates, audit before/after, invalid-batch rollback.
+
+This is the persisted execution/result summary, not a verbatim raw per-request stdout log. The complete HTTP request lines were returned in the tool transcript.

@@ -1,0 +1,22 @@
+{
+  "python_compile": true,
+  "javascript_syntax": true,
+  "services": [
+    {
+      "url": "http://127.0.0.1:8765",
+      "healthy": true
+    },
+    {
+      "url": "http://127.0.0.1:8766",
+      "healthy": true
+    },
+    {
+      "url": "http://192.168.5.41:8765",
+      "healthy": true
+    }
+  ],
+  "current_assets_served": true,
+  "source_files": 82,
+  "zip_size": 426314,
+  "sha256": "178c56296f9c6a088d2af2983090c8890c2eb82ee8d35d14bf75537b0c4a1e37"
+}

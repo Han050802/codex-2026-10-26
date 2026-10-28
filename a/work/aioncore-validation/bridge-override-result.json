@@ -1,0 +1,285 @@
+{
+  "status": 200,
+  "response": {
+    "success": true,
+    "data": {
+      "id": "8e1acf31",
+      "icon": "/api/assets/logos/tools/coding/codex.svg",
+      "name": "Codex CLI",
+      "backend": "codex",
+      "agent_type": "acp",
+      "agent_source": "builtin",
+      "agent_source_info": {
+        "binary_name": "codex"
+      },
+      "enabled": true,
+      "installed": true,
+      "command": "D:\\Codex\\2026-10-26\\a\\work\\codex-bridge\\aionui-codex-bridge.exe",
+      "native_skills_dirs": [
+        ".codex/skills"
+      ],
+      "skill_delivery": {
+        "mode": "protocol",
+        "args": [],
+        "allow_dir_args": [],
+        "method": "skills/extraRoots/set"
+      },
+      "behavior_policy": {
+        "supports_side_question": false,
+        "self_identity_sticky": false,
+        "session_load_via_meta_field": false,
+        "supports_team": true
+      },
+      "yolo_id": "agent-full-access",
+      "config_options": [
+        {
+          "id": "mode",
+          "category": "mode",
+          "type": "select",
+          "currentValue": "auto",
+          "options": [
+            {
+              "value": "read-only",
+              "name": "Read Only",
+              "description": "Codex can read files in the current workspace. Approval is required to edit files or access the internet."
+            },
+            {
+              "value": "auto",
+              "name": "Default",
+              "description": "Codex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)"
+            },
+            {
+              "value": "full-access",
+              "name": "Full Access",
+              "description": "Codex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using."
+            }
+          ]
+        },
+        {
+          "id": "model",
+          "category": "model",
+          "type": "select",
+          "currentValue": null,
+          "options": [
+            {
+              "value": "gpt-6.1-sol",
+              "name": "GPT-6.1-Sol",
+              "description": "Latest workhorse model for coding and everyday work."
+            },
+            {
+              "value": "gpt-6-astra",
+              "name": "GPT-6-Astra",
+              "description": "Frontier intelligence for the most demanding work."
+            },
+            {
+              "value": "gpt-6-sol",
+              "name": "GPT-6-Sol",
+              "description": "Previous generation workhorse model."
+            },
+            {
+              "value": "gpt-6-luna",
+              "name": "GPT-6-Luna",
+              "description": "Fast and affordable model for easier tasks."
+            },
+            {
+              "value": "gpt-5.6-sol",
+              "name": "GPT-5.6-Sol",
+              "description": "Older generation workhorse model."
+            },
+            {
+              "value": "gpt-5.6-terra",
+              "name": "GPT-5.6-Terra",
+              "description": "Older balanced model for straightforward work."
+            },
+            {
+              "value": "gpt-5.6-luna",
+              "name": "GPT-5.6-Luna",
+              "description": "Older fast and efficient model."
+            }
+          ]
+        },
+        {
+          "id": "reasoning_effort",
+          "category": "thought_level",
+          "type": "select",
+          "currentValue": null,
+          "options": [
+            {
+              "value": "low",
+              "name": "low"
+            },
+            {
+              "value": "medium",
+              "name": "medium"
+            },
+            {
+              "value": "high",
+              "name": "high"
+            },
+            {
+              "value": "xhigh",
+              "name": "xhigh"
+            },
+            {
+              "value": "max",
+              "name": "max"
+            },
+            {
+              "value": "ultra",
+              "name": "ultra"
+            }
+          ]
+        }
+      ],
+      "available_modes": {
+        "available_modes": [
+          {
+            "id": "read-only",
+            "name": "Read Only",
+            "description": "Codex can read files in the current workspace. Approval is required to edit files or access the internet."
+          },
+          {
+            "id": "auto",
+            "name": "Default",
+            "description": "Codex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)"
+          },
+          {
+            "id": "full-access",
+            "name": "Full Access",
+            "description": "Codex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using."
+          }
+        ],
+        "current_mode_id": "auto"
+      },
+      "available_models": {
+        "available_models": [
+          {
+            "id": "gpt-6.1-sol",
+            "label": "GPT-6.1-Sol",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          {
+            "id": "gpt-6-astra",
+            "label": "GPT-6-Astra",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          {
+            "id": "gpt-6-sol",
+            "label": "GPT-6-Sol",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          {
+            "id": "gpt-6-luna",
+            "label": "GPT-6-Luna",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "id": "gpt-5.6-sol",
+            "label": "GPT-5.6-Sol",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          {
+            "id": "gpt-5.6-terra",
+            "label": "GPT-5.6-Terra",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          {
+            "id": "gpt-5.6-luna",
+            "label": "GPT-5.6-Luna",
+            "reasoning_efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "current_model_id": null
+      },
+      "available_commands": [
+        {
+          "name": "review",
+          "description": "Review my current changes and find issues"
+        },
+        {
+          "name": "review-branch",
+          "description": "Review the code changes against a specific branch"
+        },
+        {
+          "name": "review-commit",
+          "description": "Review the code changes introduced by a commit"
+        },
+        {
+          "name": "init",
+          "description": "create an AGENTS.md file with instructions for Codex"
+        },
+        {
+          "name": "compact",
+          "description": "summarize conversation to prevent hitting the context limit"
+        },
+        {
+          "name": "logout",
+          "description": "logout of Codex"
+        }
+      ],
+      "sort_order": 3110,
+      "team_capable": true,
+      "status": "online",
+      "last_check_status": "online",
+      "last_check_kind": "manual",
+      "last_check_error_code": "version_drift_newer",
+      "last_check_error_message": "codex codex-cli 0.163.0 / verified 0.151.0",
+      "last_check_error_details": {
+        "code": "version_drift_newer"
+      },
+      "last_check_guidance": "The installed codex is newer than the version AionUi verified. It should still work; report anything that behaves oddly. (installed codex-cli 0.163.0 / verified by AionUi: 0.151.0)",
+      "last_check_latency_ms": 66,
+      "last_check_at": 1793010451336,
+      "last_success_at": 1793010451336,
+      "has_command_override": true,
+      "env_override_key_count": 0
+    }
+  }
+}

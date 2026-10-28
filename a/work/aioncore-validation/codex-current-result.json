@@ -1,0 +1,211 @@
+{
+  "backend": "codex",
+  "label": "codex-current",
+  "started_at": "2026-10-26T10:21:03.610331+00:00",
+  "create_request": {
+    "type": "acp",
+    "name": "AionUi isolated diagnostic codex-current",
+    "extra": {
+      "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\codex-current",
+      "backend": "codex",
+      "agent_id": "8e1acf31",
+      "agent_source": "builtin",
+      "skills": [],
+      "mcp_server_ids": [],
+      "mcp_servers": [],
+      "current_mode_id": "default"
+    }
+  },
+  "steps": [
+    {
+      "step": "create",
+      "status": 201,
+      "response": {
+        "success": true,
+        "data": {
+          "id": "d569573e",
+          "name": "AionUi isolated diagnostic codex-current",
+          "type": "acp",
+          "status": "pending",
+          "source": "aionui",
+          "pinned": false,
+          "created_at": 1793010063691,
+          "modified_at": 1793010063691,
+          "extra": {
+            "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\codex-current",
+            "backend": "codex",
+            "agent_id": "8e1acf31",
+            "agent_source": "builtin",
+            "skills": [
+              "aionui-config",
+              "conversation-create",
+              "cron",
+              "officecli",
+              "session-message",
+              "skill-creator"
+            ],
+            "mcp_server_ids": [],
+            "mcp_servers": [],
+            "current_mode_id": "default",
+            "mcp_statuses": [],
+            "is_temporary_workspace": false
+          }
+        }
+      }
+    },
+    {
+      "step": "ensure",
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "recovered": true,
+          "config_options": [],
+          "runtime": {
+            "state": "idle",
+            "can_send_message": true,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": false,
+            "pending_confirmations": 0,
+            "turn_id": null,
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    },
+    {
+      "step": "send",
+      "status": 202,
+      "response": {
+        "success": true,
+        "data": {
+          "msg_id": "ea6094d4",
+          "turn_id": "turn_689203e5",
+          "runtime": {
+            "state": "starting",
+            "can_send_message": false,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": true,
+            "pending_confirmations": 0,
+            "turn_id": "turn_689203e5",
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    }
+  ],
+  "conversation_id": "d569573e",
+  "conversation": {
+    "success": true,
+    "data": {
+      "id": "d569573e",
+      "name": "AionUi isolated diagnostic codex-current",
+      "type": "acp",
+      "status": "finished",
+      "runtime": {
+        "state": "idle",
+        "can_send_message": true,
+        "has_task": true,
+        "task_status": "finished",
+        "is_processing": false,
+        "pending_confirmations": 0,
+        "turn_id": null,
+        "supports_midturn_delivery": true
+      },
+      "source": "aionui",
+      "pinned": false,
+      "project_id": "project_01a177ba-596d-7182-bbe1-8a1375b8f38f",
+      "fork_capability": {
+        "at_turn": true
+      },
+      "prompt_capability": {
+        "image": true,
+        "audio": false
+      },
+      "created_at": 1793010063691,
+      "modified_at": 1793010073810,
+      "extra": {
+        "workspace": "D:\\Codex\\2026-10-26\\a\\work\\aioncore-validation\\workspace\\codex-current",
+        "backend": "codex",
+        "agent_id": "8e1acf31",
+        "agent_source": "builtin",
+        "skills": [
+          "aionui-config",
+          "conversation-create",
+          "cron",
+          "officecli",
+          "session-message",
+          "skill-creator"
+        ],
+        "mcp_server_ids": [],
+        "mcp_servers": [],
+        "current_mode_id": "default",
+        "mcp_statuses": [],
+        "is_temporary_workspace": false
+      }
+    }
+  },
+  "messages": {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": "ea6094d4",
+          "conversation_id": "d569573e",
+          "msg_id": "ea6094d4",
+          "type": "text",
+          "content": {
+            "content": "This is a connectivity diagnostic. Reply with exactly AIONUI_DIAGNOSTIC_OK and nothing else. Do not use tools. Do not read, create, or modify any files."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010064019
+        },
+        {
+          "id": "d9da07a0",
+          "conversation_id": "d569573e",
+          "msg_id": null,
+          "type": "tips",
+          "content": {
+            "content": "The installed codex is newer than the version AionUi verified. It should still work; report anything that behaves oddly. (installed codex-cli 0.163.0 / verified by AionUi: 0.151.0)",
+            "type": "info",
+            "code": "CLI_VERSION_NEWER",
+            "params": {
+              "cli": "codex",
+              "reported": "codex-cli 0.163.0",
+              "verified": "0.151.0"
+            },
+            "supersedes_key": null
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010064191
+        },
+        {
+          "id": "59986dac",
+          "conversation_id": "d569573e",
+          "msg_id": "59986dac",
+          "type": "text",
+          "content": {
+            "content": "AIONUI_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010073494,
+          "backend_turn_id": "01a177ba-696b-7ba1-b22a-254a1a3bf5e8"
+        }
+      ],
+      "oldest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwMDY0MDE5LCJpZCI6ImVhNjA5NGQ0In0",
+      "newest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwMDczNDk0LCJpZCI6IjU5OTg2ZGFjIn0",
+      "has_more_before": false,
+      "has_more_after": false
+    }
+  },
+  "diagnostic_ok": true,
+  "finished_at": "2026-10-26T10:21:14.106331+00:00"
+}

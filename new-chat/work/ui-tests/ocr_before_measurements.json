@@ -1,0 +1,62 @@
+[
+  {
+    "input_rotation": 0,
+    "seconds": 7.42,
+    "returncode": 0,
+    "rotation_ccw": 0,
+    "fields": {
+      "invoice_number": "26112000003789636136",
+      "invoice_date": "2026-09-08",
+      "buyer_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "seller_name": "北京超建邦科技有限公司",
+      "total_amount": "112000.00",
+      "needs_review": true
+    },
+    "error": null
+  },
+  {
+    "input_rotation": 90,
+    "seconds": 6.86,
+    "returncode": 0,
+    "rotation_ccw": 90,
+    "fields": {
+      "invoice_number": "26112000003789636136",
+      "invoice_date": "2026-09-08",
+      "buyer_name": "北京超建邦科技有限公司",
+      "seller_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "total_amount": "112000.00",
+      "needs_review": true
+    },
+    "error": null
+  },
+  {
+    "input_rotation": 180,
+    "seconds": 7.41,
+    "returncode": 0,
+    "rotation_ccw": 0,
+    "fields": {
+      "invoice_number": "26112000003789636136",
+      "invoice_date": "2026-09-08",
+      "buyer_name": "北京超建邦科技有限公司",
+      "seller_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "total_amount": "112000.00",
+      "needs_review": true
+    },
+    "error": null
+  },
+  {
+    "input_rotation": 270,
+    "seconds": 7.42,
+    "returncode": 0,
+    "rotation_ccw": 90,
+    "fields": {
+      "invoice_number": "26112000003789636136",
+      "invoice_date": "2026-09-08",
+      "buyer_name": "鸿悦盛嘉（北京）医院管理有限公司",
+      "seller_name": "北京超建邦科技有限公司",
+      "total_amount": "112000.00",
+      "needs_review": true
+    },
+    "error": null
+  }
+]

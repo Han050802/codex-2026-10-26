@@ -1,0 +1,31 @@
+{
+  "removed_companies": 200,
+  "kept_companies": 1,
+  "deleted_row_counts": {
+    "asset_depreciations": 0,
+    "inventory_movements": 2,
+    "payroll": 1,
+    "journals": 0,
+    "assets": 1,
+    "book_periods": 5,
+    "opening_balances": 0,
+    "voucher_lines": 20,
+    "vouchers": 10,
+    "inventory_items": 1,
+    "accounts": 14190,
+    "book_settings": 200,
+    "receipts": 134,
+    "contracts": 200,
+    "notes": 10,
+    "invoices": 35,
+    "projects": 15,
+    "tax_records": 20,
+    "tax_agents": 3,
+    "invoice_requests": 5,
+    "clients": 200
+  },
+  "non_example_rows_unchanged": true,
+  "integrity": "ok",
+  "mode": "applied",
+  "backup": "before-example-removal-1792984899393654500.zip"
+}

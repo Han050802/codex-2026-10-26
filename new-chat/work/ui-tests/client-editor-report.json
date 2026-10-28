@@ -1,0 +1,17 @@
+{
+  "scenarios": [
+    "full panel and required validation",
+    "searchable choices, counters, tab draft, cancel guard",
+    "local file import preserves unsaved private input",
+    "full profile creates persistent independent book",
+    "reopen, locked bookkeeping settings, rejected save retains draft",
+    "tax ID and mnemonic search, explicit private clear",
+    "existing customer can be disabled and reenabled",
+    "legacy client accepts partial profile completion",
+    "navigation guard keeps or discards explicitly",
+    "saved data is distinguished from later refresh failure"
+  ],
+  "requests": 25,
+  "allPassed": true,
+  "note": "Static DOM with real HTTP; no browser visual QA."
+}

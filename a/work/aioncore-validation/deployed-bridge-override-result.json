@@ -1,0 +1,12 @@
+{
+  "sha256": "95EE62C0B93753DFD49A9B4D78949F08C9DA8C291EABAA3B1207E8F7150972BC",
+  "status": 200,
+  "success": true,
+  "readback": {
+    "success": true,
+    "data": {
+      "command_override": "D:\\AIONUI\\compat\\codex-bridge\\aionui-codex-bridge.exe",
+      "env_override": []
+    }
+  }
+}

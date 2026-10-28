@@ -1,0 +1,30 @@
+{
+  "scenarios": [
+    "default overview has four zero cards and the original empty guide despite 200 clients, existing local tax records and contacts",
+    "eight original sidebar routes resolve to working local pages and overview refresh is read-only",
+    "empty guide opens real agent matching; UI saves unverified mapping, requires a manual verification note and never treats manual verification as a completed tax check",
+    "35 configured verified companies produce actual cards and support 30-row page selection, partial header, cross-page preservation and select all filtered",
+    "real three-company batch checks fail when evidence is absent; completing a check request never fabricates a passed result",
+    "adding an actual local declaration and receipt invalidates the old result, and only a new real server check produces a current pass",
+    "mixed optimistic versions report one genuine conflict and one independently completed check without changing the failed request",
+    "individual and annual scopes use their own real tax records/project completion; preparatory and mixed payments do not become completed declarations or checks",
+    "three separate real login sessions retain versioned edit access to the same local tax configuration",
+    "all visible filter columns open real controls; region, employee, taxpayer, agent, verification, declaration, payment, overall/national/individual checks, labels and note filters match exact persisted ranges",
+    "employee/assigned and CSV-name filters use real company membership without writes; reset clears selection and imported list; cards collapse safely and passed-card details show actual records",
+    "selected and current-filter export CSVs contain exactly the intended companies and column settings preserve required selection/name/operation controls",
+    "source tax evidence edits invalidate UI and CSV while preserving raw history; agent identity edits invalidate manual verification until a new explicit human confirmation and real recheck",
+    "rule settings persist only optional warnings, invalidate prior checks, cannot disable core evidence rules, and operation logs contain real workflow actions",
+    "overview delete recycles only the selected two companies, retains all original tax/workflow history and restores the same local configurations",
+    "batch declaration page prepares only pending selected registrations, preserves submitted records, exports/deletes exactly selected rows and individual page allows actual record correction",
+    "settlement, annual-report and task-management pages each create a real typed task, record an attributed completion step, correct it and delete it locally",
+    "settings row check targets its explicit Shanghai workflow while the overview keeps a Beijing filter",
+    "overview tax-record export ignores a stale generic client id, exports only its visible company/period, and refuses an empty scope",
+    "same-company tax-type filter and selected CSV contain only the requested individual tax record",
+    "undoing a completed annual step atomically reopens the project and a real recheck rejects its incomplete annual scope"
+  ],
+  "scenarioCount": 21,
+  "requests": 279,
+  "allPassed": true,
+  "fixture": "fresh temporary loopback demo200 database, rejected live ports 8765/8766",
+  "limits": "Functional DOM with real HTTP and real local rule results; no tax authority access or actual system printing."
+}

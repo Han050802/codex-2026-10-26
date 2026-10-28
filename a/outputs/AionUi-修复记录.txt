@@ -1,0 +1,57 @@
+AionUi Agent 错误排查与修复记录
+日期：2026-10-26（北京时间）
+
+已确认的故障
+本机 AionUi 2.2.2 / AionCore 0.2.2 的 Codex 连接器未按线程区分通知。
+当 Codex 0.163.0 的子任务完成时，AionUi 会提前结束主任务，之后丢失主任务最终答复，出现无归属输出、ChannelClosed 等状态异常。
+本机 10 月 23 日日志与原始 Codex 会话记录存在三次主任务提前结束；隔离环境两次复现同一问题。
+官方对应报告：https://github.com/iOfficeAI/AionUi/issues/4338
+官方连接器源码：https://github.com/iOfficeAI/AionCore/blob/v0.2.2/crates/aionui-session/src/backend/codex_conn.rs
+
+修补范围
+使用 AionUi 自带 command_override 配置，给 Codex 入口增加本地协议适配程序。
+适配程序继续调用原来的 Codex 0.163.0 原生可执行文件，只将属于主线程的通知交给 AionUi。
+认证、审批请求、RPC 响应及全局通知保留；原 Codex 版本、模型与全局配置保留。
+源码和原始可执行文件均保留，便于审查和撤销。
+
+验证
+1. Codex 普通单轮对话：通过。
+2. Cursor 普通单轮对话：通过。
+3. 未修补的 Codex 子任务场景：两次复现提前结束、丢失主任务最终答复。
+4. 修补后的相同场景：主任务最终答复完整、无子任务文本串入、状态正常。
+5. 同会话追加消息：通过。
+6. 同会话重启恢复：会话 ID 保持，能继续回复。
+
+其他独立问题
+历史上有一次 Codex 进程被终止（退出码 1073807364），无法仅凭该日志判断终止者；本修补不声称能阻止所有外部进程终止。
+Cursor 旧日志中的登录/初始化问题目前未复现，现有登录与普通对话测试正常。
+Gemini CLI 仍有需要登录的记录；Aion CLI 历史 429 对应 Gemini 免费配额为 0，不能靠本地协议修补解决。
+Antigravity 历史上另有无效 UTF-8 和 Windows 命令行过长错误；本次修补范围是已复现的 Codex 线程通知问题。
+
+部署状态：已完成，AionUi 已重启。
+正式程序：D:\AIONUI\compat\codex-bridge\aionui-codex-bridge.exe
+版本透传：codex-cli 0.163.0（没有启用降级版本）
+程序 SHA256：95EE62C0B93753DFD49A9B4D78949F08C9DA8C291EABAA3B1207E8F7150972BC
+源文件：同目录 CodexThreadBridge.cs
+配置指向文件：同目录 codex-real-path.txt
+原配置备份：D:\AIONUI\repair-backups\20261026T103307Z\aionui-backend.db
+精确回滚清单：D:\AIONUI\repair-backups\20261026T103307Z\codex-override.json
+
+部署后检查
+- 正式后台 /health 返回 status=ok、version=0.2.2。
+- SQLite integrity_check=ok。
+- 原有12个会话、314条消息均保留，没有丢失记录。
+- 正式安装路径的程序再次通过子任务/主最终回复/后续消息测试。
+- stdin EOF、Job Object退出、异常stdout断管清理均通过独立测试。
+
+撤销此修补
+先关闭 AionUi，再在 PowerShell 执行以下一行。
+此操作只恢复 Codex 的 command_override 字段，不会用旧数据库覆盖新聊天记录。
+python "D:\AIONUI\compat\codex-bridge\patch_aionui_codex.py" rollback --manifest "D:\AIONUI\repair-backups\20261026T103307Z\codex-override.json"
+然后重新打开 AionUi。
+
+维护说明
+这是针对当前已复现缺陷的本地兼容修补，不是官方已发布更新。
+若以后升级 AionUi 或 Codex 后行为变化，可先按上述步骤撤销并重新核验兼容性。
+排查期间下载但未启用的备用 Codex 0.151.0 保留在 D:\AIONUI\compat\codex-0.151.0；清理请求被自动审批策略拦截（blocked by policy），未改用其他方式删除，不影响本次修补。
+

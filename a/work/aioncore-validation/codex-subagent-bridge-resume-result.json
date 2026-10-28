@@ -1,0 +1,439 @@
+{
+  "conversation_id": "8b6f255a",
+  "before_session_id": "01a177c0-7450-72b3-bbe2-9be1793af33d",
+  "started_at": "2026-10-26T10:28:20.574018+00:00",
+  "steps": [
+    {
+      "step": "restart",
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "recovered": true,
+          "config_options": [
+            {
+              "id": "mode",
+              "name": "Mode",
+              "category": "mode",
+              "type": "select",
+              "current_value": "auto",
+              "options": [
+                {
+                  "value": "read-only",
+                  "name": "Read Only",
+                  "description": "Codex can read files in the current workspace. Approval is required to edit files or access the internet."
+                },
+                {
+                  "value": "auto",
+                  "name": "Default",
+                  "description": "Codex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)"
+                },
+                {
+                  "value": "full-access",
+                  "name": "Full Access",
+                  "description": "Codex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using."
+                }
+              ]
+            },
+            {
+              "id": "model",
+              "name": "Model",
+              "category": "model",
+              "type": "select",
+              "current_value": "gpt-6-astra",
+              "options": [
+                {
+                  "value": "gpt-6.1-sol",
+                  "name": "GPT-6.1-Sol"
+                },
+                {
+                  "value": "gpt-6-astra",
+                  "name": "GPT-6-Astra"
+                },
+                {
+                  "value": "gpt-6-sol",
+                  "name": "GPT-6-Sol"
+                },
+                {
+                  "value": "gpt-6-luna",
+                  "name": "GPT-6-Luna"
+                },
+                {
+                  "value": "gpt-5.6-sol",
+                  "name": "GPT-5.6-Sol"
+                },
+                {
+                  "value": "gpt-5.6-terra",
+                  "name": "GPT-5.6-Terra"
+                },
+                {
+                  "value": "gpt-5.6-luna",
+                  "name": "GPT-5.6-Luna"
+                }
+              ]
+            },
+            {
+              "id": "reasoning_effort",
+              "name": "Thinking",
+              "category": "thought_level",
+              "type": "select",
+              "options": [
+                {
+                  "value": "low",
+                  "name": "low"
+                },
+                {
+                  "value": "medium",
+                  "name": "medium"
+                },
+                {
+                  "value": "high",
+                  "name": "high"
+                },
+                {
+                  "value": "xhigh",
+                  "name": "xhigh"
+                },
+                {
+                  "value": "max",
+                  "name": "max"
+                },
+                {
+                  "value": "ultra",
+                  "name": "ultra"
+                }
+              ]
+            }
+          ],
+          "runtime": {
+            "state": "idle",
+            "can_send_message": true,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": false,
+            "pending_confirmations": 0,
+            "turn_id": null,
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    },
+    {
+      "step": "ensure",
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "recovered": false,
+          "config_options": [
+            {
+              "id": "mode",
+              "name": "Mode",
+              "category": "mode",
+              "type": "select",
+              "current_value": "auto",
+              "options": [
+                {
+                  "value": "read-only",
+                  "name": "Read Only",
+                  "description": "Codex can read files in the current workspace. Approval is required to edit files or access the internet."
+                },
+                {
+                  "value": "auto",
+                  "name": "Default",
+                  "description": "Codex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)"
+                },
+                {
+                  "value": "full-access",
+                  "name": "Full Access",
+                  "description": "Codex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using."
+                }
+              ]
+            },
+            {
+              "id": "model",
+              "name": "Model",
+              "category": "model",
+              "type": "select",
+              "current_value": "gpt-6-astra",
+              "options": [
+                {
+                  "value": "gpt-6.1-sol",
+                  "name": "GPT-6.1-Sol"
+                },
+                {
+                  "value": "gpt-6-astra",
+                  "name": "GPT-6-Astra"
+                },
+                {
+                  "value": "gpt-6-sol",
+                  "name": "GPT-6-Sol"
+                },
+                {
+                  "value": "gpt-6-luna",
+                  "name": "GPT-6-Luna"
+                },
+                {
+                  "value": "gpt-5.6-sol",
+                  "name": "GPT-5.6-Sol"
+                },
+                {
+                  "value": "gpt-5.6-terra",
+                  "name": "GPT-5.6-Terra"
+                },
+                {
+                  "value": "gpt-5.6-luna",
+                  "name": "GPT-5.6-Luna"
+                }
+              ]
+            },
+            {
+              "id": "reasoning_effort",
+              "name": "Thinking",
+              "category": "thought_level",
+              "type": "select",
+              "options": [
+                {
+                  "value": "low",
+                  "name": "low"
+                },
+                {
+                  "value": "medium",
+                  "name": "medium"
+                },
+                {
+                  "value": "high",
+                  "name": "high"
+                },
+                {
+                  "value": "xhigh",
+                  "name": "xhigh"
+                },
+                {
+                  "value": "max",
+                  "name": "max"
+                },
+                {
+                  "value": "ultra",
+                  "name": "ultra"
+                }
+              ]
+            }
+          ],
+          "runtime": {
+            "state": "idle",
+            "can_send_message": true,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": false,
+            "pending_confirmations": 0,
+            "turn_id": null,
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    },
+    {
+      "step": "send",
+      "status": 202,
+      "response": {
+        "success": true,
+        "data": {
+          "msg_id": "49d408e5",
+          "turn_id": "turn_53732860",
+          "runtime": {
+            "state": "starting",
+            "can_send_message": false,
+            "has_task": true,
+            "task_status": null,
+            "is_processing": true,
+            "pending_confirmations": 0,
+            "turn_id": "turn_53732860",
+            "supports_midturn_delivery": true
+          }
+        }
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "seconds": 0.015,
+      "status": "finished",
+      "resume_marker": false
+    }
+  ],
+  "after_session_id": "01a177c0-7450-72b3-bbe2-9be1793af33d",
+  "same_session": true,
+  "premature_finished": false,
+  "resume_ok": true,
+  "messages": {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": "f2556404",
+          "conversation_id": "8b6f255a",
+          "msg_id": "f2556404",
+          "type": "text",
+          "content": {
+            "content": "This is an isolated agent lifecycle diagnostic. Use the available collaboration tool to spawn exactly one child subagent. Instruct that child: Reply with exactly CHILD_DIAGNOSTIC_OK, do not spawn agents, use tools, access the network, or read or modify any files. You, the parent, must wait for that child to finish using only collaboration tools if needed. After receiving its result, reply with exactly PARENT_DIAGNOSTIC_OK as your final answer. Do not use shell, browser, file, or network tools. The child final is not your final; you must emit the parent final marker yourself."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010463579
+        },
+        {
+          "id": "0543f355",
+          "conversation_id": "8b6f255a",
+          "msg_id": null,
+          "type": "tips",
+          "content": {
+            "content": "The installed codex is newer than the version AionUi verified. It should still work; report anything that behaves oddly. (installed codex-cli 0.163.0 / verified by AionUi: 0.151.0)",
+            "type": "info",
+            "code": "CLI_VERSION_NEWER",
+            "params": {
+              "cli": "codex",
+              "reported": "codex-cli 0.163.0",
+              "verified": "0.151.0"
+            },
+            "supersedes_key": null
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010463644
+        },
+        {
+          "id": "de566612",
+          "conversation_id": "8b6f255a",
+          "msg_id": "de566612",
+          "type": "text",
+          "content": {
+            "content": "I’ll spawn one child and wait for its reply.PARENT_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010469562,
+          "backend_turn_id": "01a177c0-7a11-7b42-bb89-95f1095986f9"
+        },
+        {
+          "id": "ed5a7aa2",
+          "conversation_id": "8b6f255a",
+          "msg_id": "ed5a7aa2",
+          "type": "text",
+          "content": {
+            "content": "Reply with exactly FOLLOWUP_DIAGNOSTIC_OK and nothing else. Do not use tools or modify files."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010478990
+        },
+        {
+          "id": "7b458f6e",
+          "conversation_id": "8b6f255a",
+          "msg_id": "7b458f6e",
+          "type": "text",
+          "content": {
+            "content": "FOLLOWUP_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010481541,
+          "backend_turn_id": "01a177c0-af98-7802-b4f3-a0fde665098b"
+        },
+        {
+          "id": "49d408e5",
+          "conversation_id": "8b6f255a",
+          "msg_id": "49d408e5",
+          "type": "text",
+          "content": {
+            "content": "Reply with exactly RESUME_DIAGNOSTIC_OK and nothing else. Do not use tools or modify files."
+          },
+          "position": "right",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010501427
+        },
+        {
+          "id": "280e9ef5",
+          "conversation_id": "8b6f255a",
+          "msg_id": null,
+          "type": "tips",
+          "content": {
+            "content": "Full-history hydration is deprecated for paginated threads; use `excludeTurns: true`, then page with `thread/turns/list` and `thread/items/list`.",
+            "type": "info",
+            "code": null,
+            "params": null,
+            "supersedes_key": null
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010501760
+        },
+        {
+          "id": "2845a5e4",
+          "conversation_id": "8b6f255a",
+          "msg_id": "2845a5e4",
+          "type": "text",
+          "content": {
+            "content": "RESUME_DIAGNOSTIC_OK"
+          },
+          "position": "left",
+          "status": "finish",
+          "hidden": false,
+          "created_at": 1793010508003,
+          "backend_turn_id": "01a177c1-0b16-7a61-81ef-ca28f2988faa"
+        }
+      ],
+      "oldest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwNDYzNTc5LCJpZCI6ImYyNTU2NDA0In0",
+      "newest_cursor": "v1.eyJjcmVhdGVkX2F0IjoxNzkzMDEwNTA4MDAzLCJpZCI6IjI4NDVhNWU0In0",
+      "has_more_before": false,
+      "has_more_after": false
+    }
+  },
+  "finished_at": "2026-10-26T10:28:21.447908+00:00",
+  "initial_probe_note": "Initial test stopped on stale conversation.status=finished before the resumed turn emitted its first event. Corrected by fresh turn_id terminal log and post-send assistant message; no new model request was made.",
+  "expected_turn_id": "turn_53732860",
+  "terminal_events": [
+    {
+      "timestamp": "2026-10-26T10:28:28.168022Z",
+      "level": "INFO",
+      "fields": {
+        "message": "feedback.runtime.turn_terminal",
+        "diagnostic_event": "feedback.runtime.turn_terminal",
+        "conversation_id": "8b6f255a",
+        "turn_id": "turn_53732860",
+        "msg_id": "2845a5e4",
+        "event_type": "Finish",
+        "elapsed_ms": 6732,
+        "text_len": 20,
+        "error_code": "None",
+        "retryable": "None",
+        "saw_visible_output": true,
+        "saw_tool_or_side_effect": false,
+        "persisted_assistant_output": true
+      },
+      "target": "aionui_feedback_diagnostics",
+      "span": {
+        "conversation_id": "8b6f255a",
+        "msg_id": "2845a5e4",
+        "turn_id": "turn_53732860",
+        "name": "consume_with_send_error"
+      },
+      "spans": [
+        {
+          "conversation_id": "8b6f255a",
+          "msg_id": "2845a5e4",
+          "turn_id": "turn_53732860",
+          "name": "consume_with_send_error"
+        }
+      ]
+    }
+  ],
+  "verified_at": "2026-10-26T10:28:55.477938+00:00"
+}

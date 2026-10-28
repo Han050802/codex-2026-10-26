@@ -1,0 +1,32 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# Logs and process files
+*.log
+*.pid
+*.lock
+
+# Local databases and ledger backups. Keep them on disk, never publish.
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Dependencies, runtimes, and generated dumps
+node_modules/
+**/runtime/
+asar-header.json
+
+# Archives of snapshots already present as source
+*.zip
+*.tar.gz
+
+# Build outputs that have source beside them
+*.exe
+
+# OS
+Thumbs.db
+.DS_Store

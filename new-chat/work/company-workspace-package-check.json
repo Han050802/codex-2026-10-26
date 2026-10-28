@@ -1,0 +1,64 @@
+{
+  "business_data": [
+    {
+      "database": "production",
+      "rows_unchanged": true,
+      "integrity": "ok",
+      "counts": {
+        "clients": 0,
+        "users": 0,
+        "vouchers": 0,
+        "voucher_lines": 0,
+        "opening_balances": 0,
+        "accounts": 0,
+        "invoices": 0,
+        "contracts": 0,
+        "receipts": 0,
+        "tax_records": 0,
+        "projects": 0
+      }
+    },
+    {
+      "database": "demo",
+      "rows_unchanged": true,
+      "integrity": "ok",
+      "counts": {
+        "clients": 1,
+        "users": 3,
+        "vouchers": 0,
+        "voucher_lines": 0,
+        "opening_balances": 0,
+        "accounts": 66,
+        "invoices": 0,
+        "contracts": 0,
+        "receipts": 0,
+        "tax_records": 0,
+        "projects": 0
+      }
+    }
+  ],
+  "services": [
+    {
+      "port": 8765,
+      "healthy": true
+    },
+    {
+      "port": 8766,
+      "healthy": true
+    }
+  ],
+  "assets": [
+    {
+      "port": 8765,
+      "current_source_served": true
+    },
+    {
+      "port": 8766,
+      "current_source_served": true
+    }
+  ],
+  "source_files": 54,
+  "zip_size": 320080,
+  "sha256": "d44c5db4cf3b26a9201dfea0041d78aeb8d92e9d7610525f0baac7e53e37a6f2",
+  "version": "0.1.9"
+}

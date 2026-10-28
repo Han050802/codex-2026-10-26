@@ -1,0 +1,37 @@
+{
+  "elapsed_seconds": 8.97,
+  "checks": {
+    "invoice_count_two": true,
+    "both_complete": true,
+    "source_order_preserved": true,
+    "only_broken_file_warned": true,
+    "no_generic_warning": true
+  },
+  "result": {
+    "transactions": [],
+    "invoices": [
+      {
+        "date": "2026-09-08",
+        "amount": "112000.00",
+        "seller": "北京超建邦科技有限公司",
+        "buyer": "鸿悦盛嘉（北京）医院管理有限公司",
+        "number": "26112000003789636136",
+        "source": "valid-0.png",
+        "needs_review": true
+      },
+      {
+        "date": "2026-09-08",
+        "amount": "112000.00",
+        "seller": "北京超建邦科技有限公司",
+        "buyer": "鸿悦盛嘉（北京）医院管理有限公司",
+        "number": "26112000003789636136",
+        "source": "valid-180.png",
+        "needs_review": true
+      }
+    ],
+    "warnings": [
+      "damaged.jpg：OCR 识别失败，请检查文件或手工补录"
+    ],
+    "account_name": ""
+  }
+}

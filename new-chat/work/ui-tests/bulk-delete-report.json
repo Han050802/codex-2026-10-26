@@ -1,0 +1,22 @@
+{
+  "scenarios": [
+    "invoice checkbox deletes exactly two of three unposted records; confirmation cancel makes no request",
+    "posted invoice is blocked and its real ledger voucher stays active",
+    "two selected local tax registrations disappear while unselected record remains",
+    "stale tax version fails individually without preventing the other selected deletion",
+    "contract with receipt history is protected while selected empty contract deletes",
+    "receipt batch reversal creates an explicit negative record and recalculates actual debt",
+    "tax_agents: selected two records process; third record remains untouched",
+    "projects: selected two records process; third record remains untouched",
+    "invoice_requests: selected two records process; third record remains untouched",
+    "follow-up modal batch removes only selected notes and preserves unselected history",
+    "bank journal batch deletes selected unposted rows and blocks posted journal",
+    "annual matrix recycles selected companies while keeping their ledger, then batch restore makes the same voucher available",
+    "recycle-bin purge removes an untouched empty book and refuses a book with real voucher history",
+    "book voucher batch voids manual/source vouchers, restores invoice source state, blocks reviewed voucher and leaves unselected voucher active"
+  ],
+  "requests": 126,
+  "allPassed": true,
+  "fixture": "Disposable explicit-seed HTTP database only; no running application data",
+  "note": "linkedom DOM plus real HTTP and SQLite domain checks; no browser visual QA."
+}

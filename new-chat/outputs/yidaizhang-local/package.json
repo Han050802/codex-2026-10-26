@@ -1,0 +1,10 @@
+{
+  "name": "yidaizhang-local",
+  "version": "0.1.11",
+  "private": true,
+  "type": "module",
+  "description": "Local LAN accounting workspace; Python backend, local browser assets, no frontend build dependencies.",
+  "scripts": {
+    "check": "node --check public/reconcile.js && node --check public/reconcile-voucher.js && node --check public/app.js && node --check public/bookkeeping-list.js && node --check public/client-editor.js && node --check public/customer-list.js && node --check public/finance-ui.js && node --check public/company-workspace.js && node --check public/company-vouchers.js && node --check public/company-balance.js && node --check public/ticket-actions.js && node --check public/ticket-list.js && node --check public/tax-overview.js && node --check public/tax-actions.js"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "passed": 6,
+  "requests": 21,
+  "scenarios": [
+    "small exact13 columns and toolbar route",
+    "UI multi-select schedule actual persisted local only",
+    "UI row frequency updates real rendered field",
+    "UI more action local manual auth with no synthetic invoices",
+    "UI task manager select-all and real batch delete",
+    "general/small switching and page-number jump root delegation"
+  ],
+  "liveDataTouched": false
+}

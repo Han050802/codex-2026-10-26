@@ -1,0 +1,21 @@
+{
+  "scenarios": [
+    "annual screenshot structure: exact fifteen columns, original toolbar, current-month circle, legend, 30-row pagination and no extra title/statistics",
+    "all visible month cells derive closed/progress/empty states from real ledger summaries and do not equate pending review with failure",
+    "page select, partial header, cross-page selection and all-filter selection preserve real company ids and hide the compact bar after clearing",
+    "employee, assigned-book and search filters clear selection and operate on actual company assignments; empty result cannot select",
+    "year navigation and refresh update the view through reads without changing client versions, enabled states or bookkeeping",
+    "new account shows grey unbuilt months before its start, actual unreviewed voucher shows cyan progress and month entry opens the exact real book",
+    "close mode confirms one selected company and period, cancel has no write, actual close turns that month green while the unselected book stays open",
+    "an old customer general-taxpayer filter cannot hide or exclude a visibly selected small-taxpayer book from the new close operation",
+    "review selection lists only the selected real pending month and opens its voucher page without any automatic approval",
+    "selected two-company trial print preview and captured print output preserve each company own real closing balances and exclude the unselected company",
+    "mixed print selection reports a disabled company separately while preserving both valid companies and their real balances",
+    "matrix deletion recycles only the selected company and restoration retains the same original active voucher"
+  ],
+  "scenarioCount": 12,
+  "requests": 36,
+  "allPassed": true,
+  "fixture": "fresh disposable loopback demo200 fixture only",
+  "limits": "Real HTTP plus linkedom functional checks; root separately checks browser screenshot geometry."
+}

@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const require=createRequire('C:/Users/Admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/');
+const {chromium}=require('playwright');
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const page=await browser.newPage();
+try{
+ await page.goto('http://127.0.0.1:9877/work/ui-tests/reconcile-visual-harness.html');
+ await page.evaluate(async()=>{const m=await import('/outputs/yidaizhang-local/public/reconcile.js');m.resetReconcile();const root=document.querySelector('#root');root.innerHTML=m.renderReconcile([]);window.requests=[];const api=async(path,opts)=>{requests.push(path);if(path.endsWith('/start'))return {job_id:'1'};if(path.includes('/progress'))return {status:'completed',elapsed_seconds:1,files:[{name:'bank.jpg',kind:'statement',status:'completed'},{name:'invoice.jpg',kind:'invoice',status:'completed'}],result:{account_name:'识别公司',transactions:[{date:'2026-09-01',amount:'-100',counterparty:'供应商'}],invoices:[{date:'2026-09-01',amount:'100',seller:'供应商',buyer:'识别公司',number:'INV1'}]}};if(path.endsWith('/match'))return {matches:[{transaction_index:0,invoice_index:0,status:'matched'}]};throw Error(path)};m.bindReconcile(root,api,[]);});
+ const file=name=>({name,mimeType:'image/jpeg',buffer:Buffer.from('test')});
+ await page.locator('[data-rc-file="statement"]').setInputFiles(file('bank.jpg'));
+ await page.locator('[data-rc-file="invoices"]').setInputFiles([file('invoice.jpg'),file('other.jpg')]);
+ await page.locator('[data-rc-action="parse"]').click();await page.locator('.rc-results').waitFor();
+ assert.equal(await page.locator('.rc-originals a').count(),3);
+ await page.locator('[data-rc-remove-file="invoices"]').first().click();
+ assert.equal(await page.locator('.rc-originals a').count(),0);
+ assert.equal(await page.locator('[data-rc-field]').count(),0);
+ assert.equal(await page.locator('.rc-results').count(),0);
+ assert.match(await page.locator('.rc-file-status').nth(0).innerText(),/bank.jpg/);
+ assert.match(await page.locator('.rc-file-status').nth(1).innerText(),/other.jpg/);
+ assert.match(await page.locator('.rc-import-notice').innerText(),/已保存或已入账的记录不会因移除文件而撤销/);
+ await page.locator('[data-rc-action="parse"]').click();await page.locator('.rc-results').waitFor();
+ await page.locator('[data-rc-file="statement"]').setInputFiles(file('new-bank.jpg'));
+ assert.equal(await page.locator('[data-rc-field]').count(),0);
+ assert.equal(await page.locator('.rc-originals a').count(),0);
+ assert.match(await page.locator('.rc-file-status').nth(0).innerText(),/new-bank.jpg/);
+ assert.match(await page.locator('.rc-file-status').nth(1).innerText(),/other.jpg/);
+ assert(await page.locator('.rc-import-notice').isVisible());
+ assert.deepEqual((await page.evaluate(()=>requests)).filter(x=>!/\/start$|\/progress\?|\/match$/.test(x)),[]);
+ console.log('removal and replacement clear old recognition, originals and matches; retain other side; no saved-record mutation');
+} finally {await browser.close()}

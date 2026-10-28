@@ -1,0 +1,16 @@
+{
+  "scenarios": [
+    "old tax records alone cannot configure the overview; zero cards, original guide and thirteen exact columns",
+    "configured valid agent, explicit manual verification and persisted derived check results yield one correctly counted row",
+    "a tax agent bound to another client cannot silently configure or verify this client",
+    "stale check history never renders a current passed result",
+    "stale identity verification uses the derived unverified state and cannot appear as verified",
+    "the persisted preparing declaration status is displayed as in progress",
+    "mixed declaration/payment records produce truthful in-progress aggregates",
+    "failed verification stays outside eligible rows, required columns preserve controls and client text is escaped",
+    "collapse state hides only the flow cards while preserving the data table"
+  ],
+  "scenarioCount": 9,
+  "allPassed": true,
+  "note": "Independent synthetic render review only; no server or runtime data."
+}

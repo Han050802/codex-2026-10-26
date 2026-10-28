@@ -1,0 +1,1794 @@
+{
+  "success": true,
+  "data": {
+    "schema_version": 1,
+    "contract": "agent-facing-config-cli",
+    "stability": "stable",
+    "input": {
+      "default_mode": "stdin_json",
+      "business_flags": false,
+      "selectors": {
+        "assistant_id": {
+          "current": "resolve via AIONUI_CONVERSATION_ID",
+          "literal": "treat as assistant id"
+        },
+        "conversation_id": {
+          "current": "resolve from AIONUI_CONVERSATION_ID",
+          "literal": "treat as conversation id"
+        },
+        "user_id": {
+          "current": "resolve from AIONUI_USER_ID",
+          "literal": "ignored and replaced with AIONUI_USER_ID"
+        }
+      }
+    },
+    "output": {
+      "stdout": "JSON envelope",
+      "stderr": "single stable CONFIG_... error line",
+      "success_shape": {
+        "success": true,
+        "data": {},
+        "meta": {
+          "schema_version": 1
+        }
+      }
+    },
+    "runtime_context": {
+      "primary": "AIONUI_CONVERSATION_ID",
+      "environment": [
+        "AIONUI_BASE_URL",
+        "AIONUI_CONVERSATION_ID",
+        "AIONUI_USER_ID"
+      ]
+    },
+    "safety": {
+      "redacted_by_default": [
+        "provider api keys",
+        "Bedrock access keys and secrets",
+        "MCP headers",
+        "MCP stdio env values",
+        "agent env values",
+        "prompt and rule content outside explicit read commands"
+      ],
+      "read_before_write": true
+    },
+    "domains": [
+      {
+        "name": "core",
+        "commands": [
+          {
+            "path": [
+              "capabilities"
+            ],
+            "command": "config capabilities",
+            "description": "Print this agent-readable capability contract.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "context"
+            ],
+            "command": "config context",
+            "description": "Read the current runtime context and current conversation assistant.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "conversation",
+        "commands": [
+          {
+            "path": [
+              "conversation",
+              "rename"
+            ],
+            "command": "config conversation rename",
+            "description": "Rename a conversation.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "conversation_id",
+              "name"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "assistants",
+        "commands": [
+          {
+            "path": [
+              "assistants",
+              "list"
+            ],
+            "command": "config assistants list",
+            "description": "List assistants.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "get"
+            ],
+            "command": "config assistants get",
+            "description": "Read one assistant.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "create"
+            ],
+            "command": "config assistants create",
+            "description": "Create an assistant.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "description",
+              "agent_id",
+              "prompts",
+              "enabled_skills"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "update"
+            ],
+            "command": "config assistants update",
+            "description": "Update assistant metadata, defaults, or enabled skills.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "delete"
+            ],
+            "command": "config assistants delete",
+            "description": "Delete an assistant.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "import"
+            ],
+            "command": "config assistants import",
+            "description": "Import assistants.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "items"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "state"
+            ],
+            "command": "config assistants state",
+            "description": "Enable, disable, or reorder an assistant.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "enabled",
+              "sort_order"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "rule",
+              "read"
+            ],
+            "command": "config assistants rule read",
+            "description": "Read an assistant rule.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "rule",
+              "write"
+            ],
+            "command": "config assistants rule write",
+            "description": "Write an assistant rule.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale",
+              "content"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "content"
+            ]
+          },
+          {
+            "path": [
+              "assistants",
+              "rule",
+              "delete"
+            ],
+            "command": "config assistants rule delete",
+            "description": "Delete an assistant rule.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "content"
+            ]
+          },
+          {
+            "path": [
+              "assistants",
+              "skill",
+              "read"
+            ],
+            "command": "config assistants skill read",
+            "description": "Read assistant skill content.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "assistants",
+              "skill",
+              "write"
+            ],
+            "command": "config assistants skill write",
+            "description": "Write assistant skill content.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale",
+              "content"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "content"
+            ]
+          },
+          {
+            "path": [
+              "assistants",
+              "skill",
+              "delete"
+            ],
+            "command": "config assistants skill delete",
+            "description": "Delete assistant skill content.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "assistant_id",
+              "locale"
+            ],
+            "selectors": [
+              "assistant_id"
+            ],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "content"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "skills",
+        "commands": [
+          {
+            "path": [
+              "skills",
+              "list"
+            ],
+            "command": "config skills list",
+            "description": "List available skills.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "info"
+            ],
+            "command": "config skills info",
+            "description": "Inspect a skill path.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "skill_path"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "paths"
+            ],
+            "command": "config skills paths",
+            "description": "List configured skill paths.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "import"
+            ],
+            "command": "config skills import",
+            "description": "Import a skill.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "skill_path"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "delete"
+            ],
+            "command": "config skills delete",
+            "description": "Delete a skill.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "skill_name"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "scan"
+            ],
+            "command": "config skills scan",
+            "description": "Scan for importable skills.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "folder_path"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "external-paths",
+              "list"
+            ],
+            "command": "config skills external-paths list",
+            "description": "List external skill paths.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "external-paths",
+              "add"
+            ],
+            "command": "config skills external-paths add",
+            "description": "Add an external skill path.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "path"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "external-paths",
+              "remove"
+            ],
+            "command": "config skills external-paths remove",
+            "description": "Remove an external skill path.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "path"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "market",
+              "enable"
+            ],
+            "command": "config skills market enable",
+            "description": "Enable the skill market.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "skills",
+              "market",
+              "disable"
+            ],
+            "command": "config skills market disable",
+            "description": "Disable the skill market.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "mcp",
+        "commands": [
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "list"
+            ],
+            "command": "config mcp servers list",
+            "description": "List MCP servers.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "get"
+            ],
+            "command": "config mcp servers get",
+            "description": "Read one MCP server.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_id"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "create"
+            ],
+            "command": "config mcp servers create",
+            "description": "Create an MCP server.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "transport"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "update"
+            ],
+            "command": "config mcp servers update",
+            "description": "Update an MCP server.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_id",
+              "transport"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "delete"
+            ],
+            "command": "config mcp servers delete",
+            "description": "Delete an MCP server.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "toggle"
+            ],
+            "command": "config mcp servers toggle",
+            "description": "Toggle an MCP server.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "servers",
+              "import"
+            ],
+            "command": "config mcp servers import",
+            "description": "Import MCP servers.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "servers"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "test-connection"
+            ],
+            "command": "config mcp test-connection",
+            "description": "Test an MCP server configuration.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "transport"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "agent-configs"
+            ],
+            "command": "config mcp agent-configs",
+            "description": "List agent MCP config state.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "transport.headers",
+              "transport.env"
+            ]
+          },
+          {
+            "path": [
+              "mcp",
+              "oauth",
+              "check-status"
+            ],
+            "command": "config mcp oauth check-status",
+            "description": "Check MCP OAuth status.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_url"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "mcp",
+              "oauth",
+              "login"
+            ],
+            "command": "config mcp oauth login",
+            "description": "Start MCP OAuth login.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_url"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "mcp",
+              "oauth",
+              "logout"
+            ],
+            "command": "config mcp oauth logout",
+            "description": "Logout MCP OAuth.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "server_url"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "mcp",
+              "oauth",
+              "authenticated"
+            ],
+            "command": "config mcp oauth authenticated",
+            "description": "List authenticated MCP servers.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      },
+      {
+        "name": "providers",
+        "commands": [
+          {
+            "path": [
+              "providers",
+              "list"
+            ],
+            "command": "config providers list",
+            "description": "List model providers.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "create"
+            ],
+            "command": "config providers create",
+            "description": "Create a model provider.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "platform",
+              "base_url",
+              "api_key"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "update"
+            ],
+            "command": "config providers update",
+            "description": "Update a model provider.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "provider_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "delete"
+            ],
+            "command": "config providers delete",
+            "description": "Delete a model provider.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "provider_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "detect-protocol"
+            ],
+            "command": "config providers detect-protocol",
+            "description": "Detect provider protocol.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "base_url",
+              "api_key"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "fetch-models"
+            ],
+            "command": "config providers fetch-models",
+            "description": "Fetch provider models from a raw provider config.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "platform",
+              "base_url",
+              "api_key"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "models",
+              "fetch"
+            ],
+            "command": "config providers models fetch",
+            "description": "Fetch and save models for a configured provider.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "provider_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          },
+          {
+            "path": [
+              "providers",
+              "health-check"
+            ],
+            "command": "config providers health-check",
+            "description": "Run a provider health check.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "provider_id",
+              "model"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "api_key",
+              "access_key",
+              "secret_key"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "settings",
+        "commands": [
+          {
+            "path": [
+              "settings",
+              "get"
+            ],
+            "command": "config settings get",
+            "description": "Read backend settings.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "settings",
+              "patch"
+            ],
+            "command": "config settings patch",
+            "description": "Patch backend settings.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "language",
+              "notification_enabled",
+              "cron_notification_enabled",
+              "command_queue_enabled",
+              "save_upload_to_workspace"
+            ],
+            "selectors": [
+              "user_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "settings",
+              "client",
+              "get"
+            ],
+            "command": "config settings client get",
+            "description": "Read client preferences.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "secrets"
+            ]
+          },
+          {
+            "path": [
+              "settings",
+              "client",
+              "put"
+            ],
+            "command": "config settings client put",
+            "description": "Replace client preferences (free-form key-value map; null value removes a key).",
+            "input": "stdin_json",
+            "stdin_fields": [],
+            "selectors": [
+              "user_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "secrets"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "agents",
+        "commands": [
+          {
+            "path": [
+              "agents",
+              "list"
+            ],
+            "command": "config agents list",
+            "description": "List agent catalog and custom agents.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "enable"
+            ],
+            "command": "config agents enable",
+            "description": "Enable or disable an agent.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "agent_id",
+              "enabled"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "overrides",
+              "get"
+            ],
+            "command": "config agents overrides get",
+            "description": "Read agent overrides.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "agent_id"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env",
+              "secret overrides"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "overrides",
+              "set"
+            ],
+            "command": "config agents overrides set",
+            "description": "Set agent overrides.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "agent_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env",
+              "secret overrides"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "custom",
+              "create"
+            ],
+            "command": "config agents custom create",
+            "description": "Create a custom agent.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "command"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "custom",
+              "update"
+            ],
+            "command": "config agents custom update",
+            "description": "Update a custom agent.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "agent_id",
+              "name",
+              "command"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "custom",
+              "delete"
+            ],
+            "command": "config agents custom delete",
+            "description": "Delete a custom agent.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "agent_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env"
+            ]
+          },
+          {
+            "path": [
+              "agents",
+              "custom",
+              "try-connect"
+            ],
+            "command": "config agents custom try-connect",
+            "description": "Test a custom agent connection.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "command"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "env"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "cron",
+        "commands": [
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "list"
+            ],
+            "command": "config cron jobs list",
+            "description": "List cron jobs.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "get"
+            ],
+            "command": "config cron jobs get",
+            "description": "Read one cron job.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "create"
+            ],
+            "command": "config cron jobs create",
+            "description": "Create a cron job.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "schedule",
+              "message",
+              "conversation_id",
+              "created_by"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "update"
+            ],
+            "command": "config cron jobs update",
+            "description": "Update a cron job.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [
+              "conversation_id",
+              "user_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "delete"
+            ],
+            "command": "config cron jobs delete",
+            "description": "Delete a cron job.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "run"
+            ],
+            "command": "config cron jobs run",
+            "description": "Run a cron job immediately.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "skill",
+              "get"
+            ],
+            "command": "config cron jobs skill get",
+            "description": "Read cron job skill state.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "skill",
+              "save"
+            ],
+            "command": "config cron jobs skill save",
+            "description": "Save cron job skill content.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id",
+              "content"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "content"
+            ]
+          },
+          {
+            "path": [
+              "cron",
+              "jobs",
+              "skill",
+              "delete"
+            ],
+            "command": "config cron jobs skill delete",
+            "description": "Delete cron job skill content.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [],
+            "readback": true,
+            "destructive": true,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": [
+              "content"
+            ]
+          },
+          {
+            "path": [
+              "cron",
+              "current",
+              "list"
+            ],
+            "command": "config cron current list",
+            "description": "List scheduled tasks for the current conversation.",
+            "input": "none",
+            "stdin_fields": [],
+            "selectors": [],
+            "readback": false,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "current",
+              "create"
+            ],
+            "command": "config cron current create",
+            "description": "Create the scheduled task for the current conversation.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "name",
+              "schedule",
+              "schedule_description",
+              "message"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          },
+          {
+            "path": [
+              "cron",
+              "current",
+              "update"
+            ],
+            "command": "config cron current update",
+            "description": "Update the scheduled task for the current conversation.",
+            "input": "stdin_json",
+            "stdin_fields": [
+              "job_id"
+            ],
+            "selectors": [
+              "conversation_id"
+            ],
+            "readback": true,
+            "destructive": false,
+            "requires_context": [
+              "AIONUI_BASE_URL",
+              "AIONUI_CONVERSATION_ID",
+              "AIONUI_USER_ID"
+            ],
+            "redacted_fields": []
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "schema_version": 1
+  }
+}

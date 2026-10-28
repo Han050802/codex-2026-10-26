@@ -1,0 +1,16 @@
+{
+  "scenarios": [
+    "200 clients: per-page select, partial header, cross-page state, all filtered and clear",
+    "search, taxpayer, employee and subpage changes clear selection; empty list cannot select",
+    "changing accounting period clears selection",
+    "selected CSV export contains exactly two selected clients across pages",
+    "batch labels perform real HTTP updates only for the two selected clients",
+    "disabled client remains selectable for explicit export and label maintenance",
+    "refresh prunes recycled IDs; active/recycle views never share selection; recycled selected export contains the row",
+    "batch close confirms fixed IDs/period, cancellation has no effect; two books succeed and one real failure stays open; all unselected books stay unchanged"
+  ],
+  "requests": 33,
+  "allPassed": true,
+  "fixture": "temporary synthetic HTTP database only",
+  "note": "linkedom DOM and real HTTP; no browser visual QA."
+}

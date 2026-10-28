@@ -1,0 +1,301 @@
+{
+  "validation_pid": 20960,
+  "test_port_listeners": 0,
+  "before": [
+    {
+      "Name": "aioncore.exe",
+      "ProcessId": 20960,
+      "ParentProcessId": 15192,
+      "CreationDate": "2026-10-26T18:20:26.266506+08:00",
+      "ExecutablePath": "D:\\AIONUI\\resources\\bundled-aioncore\\win32-x64\\aioncore.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 12348,
+      "ParentProcessId": 20960,
+      "CreationDate": "2026-10-26T18:20:26.272831+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "cmd.exe",
+      "ProcessId": 22552,
+      "ParentProcessId": 20960,
+      "CreationDate": "2026-10-26T18:21:03.917531+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\cmd.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 26724,
+      "ParentProcessId": 22552,
+      "CreationDate": "2026-10-26T18:21:03.942707+08:00",
+      "ExecutablePath": "C:\\Program Files\\nodejs\\node.exe"
+    },
+    {
+      "Name": "codex.exe",
+      "ProcessId": 31048,
+      "ParentProcessId": 26724,
+      "CreationDate": "2026-10-26T18:21:04.009383+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 22888,
+      "ParentProcessId": 31048,
+      "CreationDate": "2026-10-26T18:21:07.716886+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 26428,
+      "ParentProcessId": 31048,
+      "CreationDate": "2026-10-26T18:21:07.725826+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 24908,
+      "ParentProcessId": 22888,
+      "CreationDate": "2026-10-26T18:21:07.727999+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 19428,
+      "ParentProcessId": 26428,
+      "CreationDate": "2026-10-26T18:21:07.734937+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 24540,
+      "ParentProcessId": 22888,
+      "CreationDate": "2026-10-26T18:21:07.897644+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "cmd.exe",
+      "ProcessId": 23304,
+      "ParentProcessId": 20960,
+      "CreationDate": "2026-10-26T18:22:44.679932+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\cmd.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 33744,
+      "ParentProcessId": 23304,
+      "CreationDate": "2026-10-26T18:22:44.691412+08:00",
+      "ExecutablePath": "C:\\Program Files\\nodejs\\node.exe"
+    },
+    {
+      "Name": "codex.exe",
+      "ProcessId": 29096,
+      "ParentProcessId": 33744,
+      "CreationDate": "2026-10-26T18:22:44.741726+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 20012,
+      "ParentProcessId": 29096,
+      "CreationDate": "2026-10-26T18:22:45.183129+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 23460,
+      "ParentProcessId": 20012,
+      "CreationDate": "2026-10-26T18:22:45.189385+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 10892,
+      "ParentProcessId": 29096,
+      "CreationDate": "2026-10-26T18:22:45.189725+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 19404,
+      "ParentProcessId": 10892,
+      "CreationDate": "2026-10-26T18:22:45.197562+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 24544,
+      "ParentProcessId": 10892,
+      "CreationDate": "2026-10-26T18:22:45.278566+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "cmd.exe",
+      "ProcessId": 11988,
+      "ParentProcessId": 20960,
+      "CreationDate": "2026-10-26T18:27:03.276281+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\cmd.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 22828,
+      "ParentProcessId": 11988,
+      "CreationDate": "2026-10-26T18:27:03.289039+08:00",
+      "ExecutablePath": "C:\\Program Files\\nodejs\\node.exe"
+    },
+    {
+      "Name": "codex.exe",
+      "ProcessId": 31832,
+      "ParentProcessId": 22828,
+      "CreationDate": "2026-10-26T18:27:03.349802+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 2948,
+      "ParentProcessId": 31832,
+      "CreationDate": "2026-10-26T18:27:03.836963+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 21008,
+      "ParentProcessId": 31832,
+      "CreationDate": "2026-10-26T18:27:03.847888+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 32152,
+      "ParentProcessId": 2948,
+      "CreationDate": "2026-10-26T18:27:03.849917+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 15496,
+      "ParentProcessId": 21008,
+      "CreationDate": "2026-10-26T18:27:03.857195+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 32876,
+      "ParentProcessId": 21008,
+      "CreationDate": "2026-10-26T18:27:04.02437+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "aionui-codex-bridge.exe",
+      "ProcessId": 26872,
+      "ParentProcessId": 20960,
+      "CreationDate": "2026-10-26T18:28:21.315004+08:00",
+      "ExecutablePath": "D:\\Codex\\2026-10-26\\a\\work\\codex-bridge\\aionui-codex-bridge.exe"
+    },
+    {
+      "Name": "codex.exe",
+      "ProcessId": 22180,
+      "ParentProcessId": 26872,
+      "CreationDate": "2026-10-26T18:28:21.37235+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 26208,
+      "ParentProcessId": 22180,
+      "CreationDate": "2026-10-26T18:28:21.896208+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 29784,
+      "ParentProcessId": 26208,
+      "CreationDate": "2026-10-26T18:28:21.903118+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 32324,
+      "ParentProcessId": 22180,
+      "CreationDate": "2026-10-26T18:28:21.905695+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 18464,
+      "ParentProcessId": 32324,
+      "CreationDate": "2026-10-26T18:28:21.914716+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 8940,
+      "ParentProcessId": 32324,
+      "CreationDate": "2026-10-26T18:28:22.010132+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "aionui-codex-bridge.exe",
+      "ProcessId": 33672,
+      "ParentProcessId": 20960,
+      "CreationDate": "2026-10-26T18:34:01.205522+08:00",
+      "ExecutablePath": "D:\\AIONUI\\compat\\codex-bridge\\aionui-codex-bridge.exe"
+    },
+    {
+      "Name": "codex.exe",
+      "ProcessId": 9836,
+      "ParentProcessId": 33672,
+      "CreationDate": "2026-10-26T18:34:01.235753+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+    },
+    {
+      "Name": "node.exe",
+      "ProcessId": 19448,
+      "ParentProcessId": 9836,
+      "CreationDate": "2026-10-26T18:34:04.797361+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 6368,
+      "ParentProcessId": 9836,
+      "CreationDate": "2026-10-26T18:34:04.805666+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 28356,
+      "ParentProcessId": 19448,
+      "CreationDate": "2026-10-26T18:34:04.807067+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "conhost.exe",
+      "ProcessId": 32588,
+      "ParentProcessId": 6368,
+      "CreationDate": "2026-10-26T18:34:04.813922+08:00",
+      "ExecutablePath": "C:\\windows\\system32\\conhost.exe"
+    },
+    {
+      "Name": "node_repl.exe",
+      "ProcessId": 10404,
+      "ParentProcessId": 19448,
+      "CreationDate": "2026-10-26T18:34:05.08128+08:00",
+      "ExecutablePath": "C:\\Users\\Admin\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\78fb63cda1a9e2b2\\bin\\node_repl.exe"
+    }
+  ],
+  "remaining_count": 0,
+  "remaining": [],
+  "finished_at": "2026-10-26T18:34:53.2943448+08:00",
+  "production": [
+    {
+      "Name": "AionUi.exe",
+      "ProcessId": 28216,
+      "ExecutablePath": "D:\\AIONUI\\AionUi.exe"
+    },
+    {
+      "Name": "aioncore.exe",
+      "ProcessId": 31112,
+      "ExecutablePath": "D:\\AIONUI\\resources\\bundled-aioncore\\win32-x64\\aioncore.exe"
+    }
+  ]
+}

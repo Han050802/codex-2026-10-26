@@ -1,0 +1,16 @@
+{
+  "stdin_eof": {
+    "exit": 23,
+    "stdout": "{\"id\":9,\"result\":{}}\r\n",
+    "stderr": "REVIEW_STDERR_OK",
+    "child_alive": false
+  },
+  "aioncore_job_termination": {
+    "wrapper_exit": 37,
+    "child_alive": false
+  },
+  "broken_stdout": {
+    "wrapper_exit": 4294967295,
+    "child_alive": false
+  }
+}

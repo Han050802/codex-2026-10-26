@@ -1,0 +1,15 @@
+Final backend verification summary after CSV client fallback fix
+Run date: 2026-10-26
+Workspace: C:/Users/Admin/Documents/Codex/2026-10-26/new-chat/outputs/yidaizhang-local
+Command: python -B -m unittest discover -s tests -q
+Exit code: 0
+Actual runner summary:
+----------------------------------------------------------------------
+Ran 90 tests in 33.772s
+
+OK
+
+All databases were disposable temporary fixtures. No runtime database was modified.
+This final run includes the original 73 tests, 16 ticket workflow/VAT frequency/local warning configuration tests, and 1 combined invoice/tax CSV fallback regression.
+New regression: a blank or whitespace CSV client_id uses payload.client_id; explicit CSV IDs take precedence; absent fallback rejects the whole mixed batch without inserting the otherwise-valid explicit row; invalid explicit IDs and duplicate invoice/tax records remain rejected. Bank import was unchanged.
+This is the persisted result summary, not the complete per-request stdout transcript.
