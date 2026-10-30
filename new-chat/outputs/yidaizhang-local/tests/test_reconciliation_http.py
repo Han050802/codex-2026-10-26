@@ -43,7 +43,7 @@ class ReconciliationHTTPTests(unittest.TestCase):
         entry={'name':'invoice.jpg','content_base64':base64.b64encode(b'image').decode()}
         result={'ok':True,'orientation_candidates_tried':2,'orientation_confident':True,'fields':{'invoice_number':'123'}}
         with patch.object(reconciliation.OCRWorker,'run',return_value=(result,'')):
-            code,started,_=self.client.call('/api/reconcile/parse/start',{'invoices':[entry]})
+            code,started,_=self.client.call('/api/reconcile/parse/start',{'client_id':self.cid,'invoices':[entry]})
             self.assertEqual(code,200,started)
             for _ in range(100):
                 code,status,_=self.client.call('/api/reconcile/parse/progress?job_id='+started['job_id'])
@@ -128,26 +128,40 @@ class ReconciliationHTTPTests(unittest.TestCase):
             self.assertEqual(conn.execute('SELECT COUNT(*) FROM vouchers').fetchone()[0],1)
             self.assertEqual(conn.execute('SELECT COUNT(*) FROM voucher_lines').fetchone()[0],2)
 
-    def test_auto_expense_classification_http_rechecks_and_updates_balance(self):
+    def test_auto_match_http_posts_once_and_updates_numbered_all_book_balance(self):
         t={'date':'2026-09-09','amount':'-100.00','counterparty':'合成供应商','note':'采购','source':'流水.png','needs_review':True}
         i={'date':'2026-09-08','amount':'100.00','seller':'合成供应商','buyer':'合成客户公司','number':'AUTO-1','source':'发票.png','needs_review':True,'item_name':'咨询','business_purpose':'行政管理用途','net_amount':'100.00','tax_amount':'0.00'}
         p={'client_id':self.cid,'account_name':'合成客户公司','account_needs_review':True,'transactions':[t],'invoices':[i]}
         self.assertEqual(self.client.call('/api/reconcile/batch-auto',p,csrf=False)[0],403)
         code,out,_=self.client.call('/api/reconcile/batch-auto',p)
-        self.assertEqual(code,200,out); self.assertEqual(out['rows'][0]['status'],'expense_classified')
+        self.assertEqual(code,200,out); self.assertEqual(out['rows'][0]['status'],'posted')
         record_id=out['rows'][0]['id']
+        voucher_id=out['rows'][0]['voucher_id']
+        self.assertEqual('2026-09',out['rows'][0]['period'])
+        self.assertEqual('automatic_default',out['rows'][0]['automatic_posting']['funding_source'])
+        self.assertEqual((10000,10000),(sum(line['debit_fen'] for line in out['rows'][0]['posted_lines']),sum(line['credit_fen'] for line in out['rows'][0]['posted_lines'])))
         self.assertEqual(out['invoice_verification'],'not_checked')
         code,retry,_=self.client.call('/api/reconcile/batch-auto',p)
-        self.assertEqual(code,200,retry); self.assertEqual(retry['rows'][0]['status'],'expense_classified')
+        self.assertEqual(code,200,retry); self.assertEqual(retry['rows'][0]['status'],'posted')
         self.assertEqual(retry['rows'][0]['id'],record_id)
+        self.assertEqual(retry['rows'][0]['voucher_id'],voucher_id)
+        self.assertTrue(retry['rows'][0]['already_posted'])
         with closing(db.connect(self.app.db_path)) as conn:
             import finance
             bundle=finance.balance_bundle(conn,self.cid,'2026-09','2026-09')
-            trial={x['account_code']:x for x in bundle['trial_balance']}
-            self.assertEqual(trial['5602']['debit_fen'],0)
-            self.assertEqual([(x['record_id'],x['account_code'],x['direction'],x['amount_fen']) for x in bundle['expense_classifications']],[(record_id,'5602','expense',10000)])
-            self.assertEqual(conn.execute('SELECT COUNT(*) FROM vouchers').fetchone()[0],0)
+            trial={x['account_code']:x for x in bundle['trial_balance_rollup']}
+            self.assertEqual(trial['5602']['debit_fen'],10000)
+            self.assertEqual(trial['1002']['credit_fen'],10000)
+            self.assertEqual([],bundle['expense_classifications'])
+            self.assertEqual(conn.execute('SELECT COUNT(*) FROM vouchers').fetchone()[0],1)
             self.assertEqual(conn.execute('SELECT COUNT(*) FROM reconciliation_records').fetchone()[0],1)
+        code,total,_=self.client.call(f'/api/books/{self.cid}/balance?scope=all&start=2026-01&end=2026-01')
+        self.assertEqual(code,200,total)
+        self.assertEqual(('all',True,'2026-01','2026-09'),(total['scope'],total['all_book'],total['start_period'],total['end_period']))
+        categories=[row for row in total['category_rows'] if row.get('is_category') and row['original_account_code'].startswith('5602')]
+        self.assertEqual(10000,sum(row['debit_fen'] for row in categories if row['is_leaf']))
+        self.assertTrue(all(row['account_code'].startswith(row['parent_code']) and len(row['account_code'])==len(row['parent_code'])+2 for row in categories))
+        self.assertEqual({'debit_fen':10000,'credit_fen':10000},{key:total['totals'][key] for key in ('debit_fen','credit_fen')})
 
 if __name__ == '__main__':
     unittest.main()

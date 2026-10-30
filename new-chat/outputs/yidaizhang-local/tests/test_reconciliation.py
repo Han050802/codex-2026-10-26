@@ -1,3 +1,4 @@
+"""Reconciliation regression tests use synthetic companies and transactions only."""
 import base64, io, sqlite3, sys, tempfile, unittest, zipfile
 from pathlib import Path
 from unittest.mock import patch
@@ -6,14 +7,14 @@ from db import ApiError
 
 class ReconcileTests(unittest.TestCase):
     def setUp(self):
-        self.t={'date':'2026-09-09','amount':'-112000.00','counterparty':'北京超建邦科技有限公司','note':'服务费','source':'bank.pdf'}
-        self.i={'date':'2026-09-08','amount':'112000.00','seller':'北京超建邦科技有限公司','buyer':'客户公司','number':'123','source':'invoice.pdf'}
+        self.t={'date':'2026-09-05','amount':'-1200.00','counterparty':'合成供应商甲有限公司','note':'服务费','source':'bank.pdf'}
+        self.i={'date':'2026-09-04','amount':'1200.00','seller':'合成供应商甲有限公司','buyer':'客户公司','number':'123','source':'invoice.pdf'}
     def test_match_and_ambiguity(self):
         self.assertEqual(r.match([self.t],[self.i],'客户公司')['matches'][0]['status'],'matched')
         out=r.match([self.t],[self.i,self.i],'客户公司')['matches'][0]
         self.assertEqual(out['status'],'review');self.assertIsNone(out['invoice_index'])
-        self.assertEqual(r.match([self.t],[dict(self.i,amount='112000.01')],'客户公司')['matches'][0]['status'],'review')
-        self.assertEqual(r.match([dict(self.t,amount='112000.00')],[self.i],'客户公司')['matches'][0]['status'],'review')
+        self.assertEqual(r.match([self.t],[dict(self.i,amount='1200.01')],'客户公司')['matches'][0]['status'],'review')
+        self.assertEqual(r.match([dict(self.t,amount='1200.00')],[self.i],'客户公司')['matches'][0]['status'],'review')
         self.assertEqual(r.match([dict(self.t,needs_review=True)],[dict(self.i,needs_review=True)],'客户公司')['matches'][0]['status'],'matched')
         unverified=r.match([self.t],[self.i],'客户公司',account_needs_review=True)['matches'][0]
         self.assertEqual((unverified['invoice_index'],unverified['status']),(0,'matched'))
@@ -21,8 +22,8 @@ class ReconcileTests(unittest.TestCase):
         self.assertEqual(r.match([self.t],[dict(self.i,number='')],'客户公司')['matches'][0]['status'],'review')
         self.assertEqual(r.match([dict(self.t,date='')],[self.i],'客户公司')['matches'][0]['status'],'review')
         with self.assertRaises(ApiError):r.match([self.t],[self.i],'客户公司',account_needs_review='false')
-        second_t=dict(self.t,date='2026-09-17',amount='-103000.00')
-        second_i=dict(self.i,date='2026-09-17',amount='103000.00',number='456')
+        second_t=dict(self.t,date='2026-09-16',amount='-800.00')
+        second_i=dict(self.i,date='2026-09-16',amount='800.00',number='456')
         bad_first=dict(self.i,seller='名称有误')
         result=r.match([self.t,second_t],[bad_first,second_i],'客户公司')['matches']
         self.assertEqual(result[0]['status'],'review')
@@ -67,7 +68,7 @@ class ReconcileTests(unittest.TestCase):
         big=[dict(self.i,amount='1.00',number=str(n)) for n in range(15)]
         self.assertEqual(r.match([t],big,'客户公司')['multi_invoice_candidates'][0]['status'],'limit_exceeded')
     def test_income_and_expense_match_with_correct_invoice_roles(self):
-        income_t=dict(self.t,amount='112000.00',counterparty='购买客户')
+        income_t=dict(self.t,amount='1200.00',counterparty='购买客户')
         income_i=dict(self.i,buyer='购买客户',seller='客户公司',number='sales-1')
         result=r.match([self.t,income_t],[self.i,income_i],'客户公司')['matches']
         self.assertEqual([(x['invoice_index'],x['status']) for x in result],[(0,'matched'),(1,'matched')])
@@ -75,13 +76,13 @@ class ReconcileTests(unittest.TestCase):
         wrong=r.match([income_t],[dict(income_i,buyer='客户公司',seller='购买客户')],'客户公司')['matches'][0]
         self.assertEqual(wrong['status'],'review')
         self.assertTrue(any('购买方' in reason for reason in wrong['reasons']))
-        wrong_amount=r.match([income_t],[dict(income_i,amount='112000.01')],'客户公司')['matches'][0]
+        wrong_amount=r.match([income_t],[dict(income_i,amount='1200.01')],'客户公司')['matches'][0]
         self.assertEqual(wrong_amount['status'],'review')
         self.assertIn('金额不一致',wrong_amount['reasons'])
         self.assertTrue(r.compare(dict(income_t,amount='0'),income_i,'客户公司'))
 
     def test_income_duplicates_and_multiple_candidates_require_review(self):
-        t=dict(self.t,amount='112000.00',counterparty='购买客户')
+        t=dict(self.t,amount='1200.00',counterparty='购买客户')
         i=dict(self.i,buyer='购买客户',seller='客户公司',number='sales-1')
         duplicate_invoices=r.match([t],[i,dict(i,number='sales-2')],'客户公司')['matches'][0]
         self.assertEqual((duplicate_invoices['invoice_index'],duplicate_invoices['status']),(None,'review'))
@@ -95,7 +96,7 @@ class ReconcileTests(unittest.TestCase):
         import account_rules
         account_rules.init_schema(c); account_rules.init_schema(c)
         purchase=dict(self.i,item_name='咨询服务',business_purpose='行政管理用途')
-        receipt=dict(self.t,amount='112000.00',counterparty='购买客户')
+        receipt=dict(self.t,amount='1200.00',counterparty='购买客户')
         sale=dict(self.i,buyer='购买客户',seller='客户公司',number='sales-1',item_name='软件服务',business_purpose='主营业务服务')
         result=r.match([self.t,receipt],[purchase,sale],'客户公司',conn=c,client_id=1)
         self.assertEqual([x['account_code'] for x in result['classification_transactions']],['6602','6001'])
@@ -127,7 +128,7 @@ class ReconcileTests(unittest.TestCase):
 
     def test_ocr_warnings_identify_actual_gaps_and_do_not_create_empty_invoice(self):
         def item(name): return {'name':name,'content_base64':base64.b64encode(b'image').decode()}
-        complete={'ok':True,'orientation_confident':True,'fields':{'invoice_number':'123','invoice_date':'2026-09-08','total_amount':'112000.00','buyer_name':'客户公司','seller_name':'北京超建邦科技有限公司'}}
+        complete={'ok':True,'orientation_confident':True,'fields':{'invoice_number':'123','invoice_date':'2026-09-04','total_amount':'1200.00','buyer_name':'客户公司','seller_name':'合成供应商甲有限公司'}}
         partial={'ok':True,'orientation_confident':False,'fields':{'invoice_number':'456','buyer_name':'客户公司'}}
         empty={'ok':True,'orientation_confident':True,'fields':{}}
         with patch.object(r.OCRWorker,'run',side_effect=[(complete,''),(partial,''),(empty,'')]) as call:
@@ -141,7 +142,7 @@ class ReconcileTests(unittest.TestCase):
 
     def test_ocr_failure_does_not_discard_other_files(self):
         def item(name): return {'name':name,'content_base64':base64.b64encode(b'image').decode()}
-        good={'ok':True,'fields':{'invoice_number':'123','invoice_date':'2026-09-08','total_amount':'1.00','buyer_name':'客户公司','seller_name':'销售公司'},'orientation_confident':True}
+        good={'ok':True,'fields':{'invoice_number':'123','invoice_date':'2026-09-04','total_amount':'1.00','buyer_name':'客户公司','seller_name':'销售公司'},'orientation_confident':True}
         with patch.object(r.OCRWorker,'run',side_effect=[(None,'OCR 识别超时，请检查文件或手工补录'),(good,'')]):
             out=r.parse({'invoices':[item('fail.jpg'),item('good.jpg')]})
         self.assertEqual(len(out['invoices']),1)
@@ -151,7 +152,7 @@ class ReconcileTests(unittest.TestCase):
 
     def test_bank_missing_fields_warns_specifically(self):
         item={'name':'bank.jpg','content_base64':base64.b64encode(b'image').decode()}
-        result={'ok':True,'fields':{'account_name':None,'transactions':[{'date':'2026-09-09','amount':None,'counterparty':'张三'}]}}
+        result={'ok':True,'fields':{'account_name':None,'transactions':[{'date':'2026-09-05','amount':None,'counterparty':'张三'}]}}
         with patch.object(r.OCRWorker,'run',return_value=(result,'')):
             out=r.parse({'statement':item})
         self.assertEqual(len(out['transactions']),1)

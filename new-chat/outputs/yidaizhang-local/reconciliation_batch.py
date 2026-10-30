@@ -71,7 +71,7 @@ def _suggestion_context(transactions):
 
 
 def _existing_record(conn,cid,t,i):
-    """Reuse only the same unposted match, never an unrelated invoice or transaction."""
+    """Reuse the same source identity; active posting details are read separately."""
     row=conn.execute('SELECT * FROM reconciliation_records WHERE client_id=? AND invoice_number=?',
                      (cid,str(i.get('number','')).strip())).fetchone()
     if not row: return None, ''
@@ -82,8 +82,6 @@ def _existing_record(conn,cid,t,i):
                 for k in ('date','seller','buyer','number')) and reconciliation.fen(old_i.get('amount'))==reconciliation.fen(i.get('amount')))
     if not same_t or not same_i or row['status'] not in ('matched','reviewed'):
         return None, '该发票已有不同核对记录，请核实后处理'
-    posted=conn.execute("SELECT 1 FROM vouchers WHERE client_id=? AND source_type='reconciliation' AND source_id=? AND status='active'",(cid,str(row['id']))).fetchone()
-    if posted: return None, '该发票已保存并入账，请核对是否重复'
     return dict(row), ''
 
 
@@ -108,7 +106,7 @@ def _store_match(conn,payload,draft,row,user):
     else:
         record={'client_id':draft['client_id'],'account_name':payload['account_name'],
                 'account_needs_review':payload.get('account_needs_review',False),
-                'transaction':t,'invoice':i,
+                'transaction':dict(t,direction_needs_review=False) if row.get('automatic_posting') else t,'invoice':i,
                 'batch':{'transactions':payload['transactions'],'invoices':payload['invoices'],
                          'transaction_index':ti,'invoice_index':ii}}
         if row.get('voucher'): record['voucher']=row['voucher']
@@ -119,13 +117,40 @@ def _store_match(conn,payload,draft,row,user):
     metadata={'evidence':evidence,'classification':row.get('classification'),
               'reason':row.get('reason',''), 'classification_inputs':_classification_inputs(i),
               'suggestion_context':_suggestion_context(payload['transactions'])}
+    if row.get('automatic_posting'):
+        metadata['automatic_posting']=row['automatic_posting']
+    if row.get('linked_voucher_id'):
+        metadata['linked_voucher_id']=row['linked_voucher_id']
+        result.update(reconciliation._posting_result(conn,draft['client_id'],row['linked_voucher_id'],True,t))
     if row.get('expense_classification'):
         metadata['expense_classification']=row['expense_classification']
     if metadata!=previous:
         conn.execute('UPDATE reconciliation_records SET batch_metadata_json=? WHERE id=?',
                      (json.dumps(metadata,ensure_ascii=False),result['id']))
         audit(conn,user,'reconcile_batch_metadata','reconciliation_records',result['id'],{'before':previous,'after':metadata})
+    _attach_sources(conn,payload,row,result,user)
     return result
+
+
+def _attach_sources(conn,payload,row,result,user):
+    import source_archive
+    if not payload.get('archive_id'): return
+    ti,ii=row['transaction_index'],row.get('invoice_index')
+    receipt=None
+    receipts=payload.get('receipts') or []
+    if receipts:
+        matched=reconciliation.match_receipts(payload['transactions'],receipts)['matches']
+        pair=next((item for item in matched if item['transaction_index']==ti and item['status']=='matched'),None)
+        if pair: receipt=receipts[pair['receipt_index']]
+    supplied=payload.get('evidence') or []
+    source_archive.attach(conn,int(payload['client_id']),payload['archive_id'],user,
+                          payload['transactions'][ti],payload['invoices'][ii] if ii is not None else None,receipt,
+                          record_id=result.get('id'),voucher_id=result.get('voucher_id'),
+                          basis={'matching_basis':row.get('basis') or ['流水与发票唯一匹配'],
+                                 'evidence':supplied[ti] if ti<len(supplied) else {},
+                                 'classification':row.get('classification'),
+                                 'automatic_posting':row.get('automatic_posting'),
+                                 'account_name':payload.get('account_name','')})
 
 
 def _asof(conn,cid,code,date,include_date=False):
@@ -273,148 +298,245 @@ def _draft(conn,cid,t,i,classification,e):
     return lines, reasons, basis
 
 
+def _funding_account(conn,cid,evidence):
+    explicit=_leaf(conn,cid,evidence.get('bank_account_code'))
+    if explicit and finance._cash(explicit): return explicit,'explicit'
+    banks=[dict(row) for row in conn.execute("SELECT * FROM accounts WHERE client_id=? AND (code LIKE '1002%' OR name LIKE '%银行存款%') ORDER BY CASE WHEN code='1002' THEN 0 ELSE 1 END,code",(cid,))
+           if _leaf(conn,cid,row['code']) and finance._cash(dict(row))]
+    if not banks: raise ApiError(409,'账套没有可用的银行存款末级科目')
+    return banks[0],'automatic_default'
+
+
+def _target_line(conn,cid,code,name='',sub=''):
+    """Return an existing leaf or a deferred, safe named child without writes."""
+    sub=reconciliation.normalize(sub)[:80]
+    account=conn.execute('SELECT * FROM accounts WHERE client_id=? AND code=?',(cid,str(code or ''))).fetchone()
+    if name and (not account or account['name']!=name):
+        named=conn.execute('SELECT * FROM accounts WHERE client_id=? AND name=? ORDER BY length(code),code',(cid,name)).fetchall()
+        account=named[0] if named else None
+    if not account or finance._cash(dict(account)) or account['report_key']=='prior_adjustment': return None,None
+    account=dict(account); code=account['code']; leaf=_leaf(conn,cid,code)
+    if sub:
+        named=[dict(row) for row in conn.execute('SELECT * FROM accounts WHERE client_id=? AND code LIKE ? AND code<>? AND name=? ORDER BY code',(cid,code+'%',code,sub)) if _leaf(conn,cid,row['code'])]
+        if len(named)==1: return named[0],{'account_code':named[0]['code']}
+        if len(named)>1: return None,None
+    if leaf and not sub: return leaf,{'account_code':code}
+    used=conn.execute('SELECT 1 FROM voucher_lines WHERE client_id=? AND account_code=?',(cid,code)).fetchone() or conn.execute('SELECT 1 FROM opening_balances WHERE client_id=? AND account_code=? AND (debit_fen<>0 OR credit_fen<>0)',(cid,code)).fetchone()
+    if sub and not used and len(code)<=18:
+        suffixes=[row['code'][len(code):] for row in conn.execute('SELECT code FROM accounts WHERE client_id=? AND code LIKE ? AND code<>?',(cid,code+'%',code))]
+        if max([int(value[:2].ljust(2,'9')) for value in suffixes if value.isdigit()],default=0)<99:
+            return account,{'business_parent_code':code,'business_sub_account':sub[:80]}
+    if leaf: return leaf,{'account_code':code}
+    return None,None
+
+
+def _record_posting(conn,cid,record,transaction):
+    if not record: return None
+    direct=conn.execute("SELECT id FROM vouchers WHERE client_id=? AND source_type='reconciliation' AND source_id=? AND status='active'",(cid,str(record['id']))).fetchone()
+    try: linked=json.loads(record.get('batch_metadata_json') or '{}').get('linked_voucher_id')
+    except (ValueError,TypeError,AttributeError): linked=None
+    if direct: return reconciliation._posting_result(conn,cid,direct['id'],True,transaction)
+    if linked and conn.execute("SELECT 1 FROM vouchers WHERE id=? AND client_id=? AND status='active'",(linked,cid)).fetchone():
+        return reconciliation._posting_result(conn,cid,linked,True,transaction)
+    return None
+
+
+def _receipt_posting(conn,cid,transaction,receipt=None):
+    if receipt:
+        source=normalize_receipt_source(transaction,receipt)
+        row=conn.execute("SELECT id FROM vouchers WHERE client_id=? AND source_type='bank_receipt' AND source_id=? AND status='active'",(cid,source)).fetchone()
+        if row: return reconciliation._posting_result(conn,cid,row['id'],True,transaction)
+    fingerprint=reconciliation._transaction_key(transaction)
+    rows=conn.execute("SELECT v.id,a.detail FROM vouchers v JOIN audit_logs a ON a.entity='vouchers' AND a.entity_id=CAST(v.id AS TEXT) AND a.action='reconcile_receipt_post' WHERE v.client_id=? AND v.source_type='bank_receipt' AND v.status='active' AND v.date=?",(cid,transaction.get('date')))
+    for row in rows:
+        try: detail=json.loads(row['detail'])
+        except (ValueError,TypeError): continue
+        if detail.get('transaction_key')==fingerprint:
+            return reconciliation._posting_result(conn,cid,row['id'],True,transaction)
+    return None
+
+
+def normalize_receipt_source(transaction,receipt):
+    number=reconciliation.normalize(receipt.get('number'))
+    return reconciliation.normalize(transaction.get('date'))+':'+(number or reconciliation._transaction_key(transaction))
+
+
+def _automatic_draft(conn,cid,transaction,invoice,classification,evidence,source='invoice',matched_receipt=None):
+    """A unique document match posts its signed gross amount under the chosen policy."""
+    date=finance._date(transaction.get('date'))
+    value=reconciliation.fen(transaction.get('amount'))
+    total=reconciliation.fen(invoice.get('amount')) if invoice else abs(value or 0)
+    if not value or not total or total<=0 or abs(value)!=total:
+        raise ApiError(409,'匹配金额无效或与流水金额不一致')
+    counter=reconciliation.normalize(transaction.get('counterparty'))
+    blank_receipt_match=(source=='receipt' and isinstance(matched_receipt,dict) and
+                         not reconciliation.normalize(matched_receipt.get('counterparty')) and
+                         reconciliation.normalize(matched_receipt.get('date'))==date and
+                         reconciliation.fen(matched_receipt.get('amount'))==value)
+    if not counter and not blank_receipt_match: raise ApiError(409,'流水交易对方名称缺失')
+    bank,funding_source=_funding_account(conn,cid,evidence)
+    selected=evidence.get('business_account_code')
+    transaction_note=reconciliation.normalize(transaction.get('note'))
+    receipt_note=reconciliation.normalize((matched_receipt or {}).get('note'))
+    # An exact bank receipt may legitimately omit the other party (interest,
+    # bank service fees). A purpose label names the business detail only;
+    # the original counterparty stays blank for identity and audit purposes.
+    detail_name=counter or transaction_note or receipt_note or ('回单收款（未提供交易对方）' if value>0 else '回单付款（未提供交易对方）')
+    uncertain_note=(not selected and not reconciliation.normalize((invoice or {}).get('business_purpose')) and
+                    (any(word in transaction_note for word in ('不','非','未','待','可能','拟','假设','或者','或许','实际为')) or
+                     sum(1 for use in NOTE_USES if use in transaction_note)>1))
+    if uncertain_note:
+        # A unique document still posts, but a negated or conflicting purpose
+        # cannot substantiate the contrary income/expense recommendation.
+        classification.clear()
+        classification.update(status='review',account_code=None,account_name=None,
+                              basis='流水用途包含否定或冲突，保留原始备注并按匹配金额挂往来',
+                              source='uncertain_transaction_note',rule_ids=[],source_urls=[])
+    suggestion=classification.get('rule_suggestion') or {}
+    code=selected or classification.get('account_code') or suggestion.get('account_code')
+    name='' if selected else classification.get('account_name') or suggestion.get('account_name') or ''
+    sub=classification.get('sub_account') or suggestion.get('sub_account') or ''
+    target,line=_target_line(conn,cid,code,name,reconciliation.normalize(sub))
+    if not target and code:
+        target,line=_target_line(conn,cid,code,name,detail_name)
+    subject_source='selected_account' if selected and target else 'recommendation'
+    if not target:
+        fallback='1221' if value<0 else '2241'
+        target,line=_target_line(conn,cid,fallback,'其他应收款' if value<0 else '其他应付款',detail_name)
+        subject_source='other_receivable_fallback' if value<0 else 'other_payable_fallback'
+    if not target: raise ApiError(409,'账套没有可用的业务或往来末级科目')
+    provenance={'policy':'matched_document_direct_post','matched_source':source,'funding_source':funding_source,
+                'funding_account_code':bank['code'],'subject_source':subject_source,'subject_account_code':target['code'],
+                'subject_name':line.get('business_sub_account') or target['name'],'amount_fen':abs(value),
+                'source_net_amount':None if not invoice else invoice.get('net_amount'),
+                'source_tax_amount':None if not invoice else invoice.get('tax_amount'),'tax_mode':'gross'}
+    if not counter:
+        provenance.update(counterparty_missing=True,detail_name=detail_name,
+                          detail_name_source='transaction_note' if transaction_note else 'receipt_note' if receipt_note else 'missing_counterparty_label',
+                          raw_transaction_note=transaction_note,raw_receipt_note=receipt_note)
+    if uncertain_note: provenance['classification_source']='uncertain_transaction_note'
+    net=reconciliation.fen(invoice.get('net_amount')) if invoice else None
+    tax=reconciliation.fen(invoice.get('tax_amount')) if invoice else None
+    reliable=bool(invoice and net is not None and tax is not None and net>=0 and tax>=0 and net+tax==abs(value))
+    small_ordinary=bool(invoice and value<0 and finance._client(conn,cid).get('taxpayer_type')=='small' and invoice.get('invoice_type')=='ordinary')
+    tax_account=None
+    if reliable and tax and not small_ordinary and target['report_key'] not in ('receivable','payable','prepaid','advance','other_liability','tax_payable'):
+        explicit=_leaf(conn,cid,evidence.get('tax_account_code'))
+        if explicit and explicit['report_key']=='tax_payable': tax_account=explicit
+        else:
+            leaves=[dict(row) for row in conn.execute("SELECT * FROM accounts WHERE client_id=? AND report_key='tax_payable' ORDER BY code",(cid,)) if _leaf(conn,cid,row['code'])]
+            named=[row for row in leaves if ('销项税' if value>0 else '进项税') in row['name']]
+            if len(named)==1: tax_account=named[0]
+            elif not named and len(leaves)==1 and leaves[0]['code']=='2221': tax_account=leaves[0]
+    split=bool(tax_account)
+    business_amount=net if split else abs(value)
+    business_line=dict(line,debit_fen=business_amount if value<0 else 0,credit_fen=business_amount if value>0 else 0)
+    bank_line=finance._entry(bank['code'],max(value,0),max(-value,0))
+    lines=[] if not business_amount else [business_line]
+    if split:
+        lines.append(finance._entry(tax_account['code'],tax if value<0 else 0,tax if value>0 else 0))
+        provenance.update(tax_mode='split',net_fen=net,tax_fen=tax,tax_account_code=tax_account['code'])
+    elif small_ordinary: provenance['tax_mode']='gross_small_ordinary'
+    elif not reliable: provenance['tax_mode']='gross_unreliable_or_missing_tax'
+    elif tax: provenance['tax_mode']='gross_no_unique_tax_account'
+    lines=([bank_line]+lines) if value>0 else (lines+[bank_line])
+    note=transaction_note or receipt_note
+    for entry in lines: entry['summary']=(note or detail_name)[:200]
+    basis=['流水与'+('发票' if source=='invoice' else '银行回单')+'唯一匹配，按匹配金额直接入账',
+           ('已选资金科目：' if funding_source=='explicit' else '自动默认资金科目：')+bank['code']+' '+bank['name']]
+    if provenance['tax_mode'].startswith('gross_unreliable'): basis.append('未补造不含税金额或税额，按匹配总额入账')
+    if uncertain_note: basis.append(classification['basis'])
+    if not counter: basis.append('流水及匹配回单未提供交易对方，按原始用途或缺名标识记业务明细，保留原空值')
+    return {'date':date,'summary':(('收款 ' if value>0 else '付款 ')+counter+' '+note).strip()[:200],'lines':lines},basis,provenance
+
+
 def preview(conn,payload):
     if not isinstance(payload,dict): raise ApiError(400,'核对批次无效')
     if isinstance(payload.get('client_id'),bool): raise ApiError(400,'客户无效')
     try: cid=int(payload.get('client_id'))
     except (TypeError,ValueError): raise ApiError(400,'请选择客户账套')
     client=finance._client(conn,cid)
+    import source_archive
+    source_archive.validate(conn,cid,payload.get('archive_id'))
     txs=payload.get('transactions'); ivs=payload.get('invoices')
     if not isinstance(txs,list) or not txs or len(txs)>100 or not isinstance(ivs,list) or len(ivs)>100: raise ApiError(400,'批次需要 1 至 100 条流水，发票最多 100 张')
     evidence=payload.get('evidence',[])
-    if not isinstance(evidence,list) or len(evidence)>len(txs) or any(not isinstance(x,dict) for x in evidence): raise ApiError(400,'业务依据格式无效')
     allowed={'treatment','bank_account_code','settlement_account_code','tax_treatment','tax_account_code','evidence_note','duplicate_review_note','business_account_code'}
-    if any(any(k not in allowed or not isinstance(v,str) or len(v)>500 for k,v in x.items()) for x in evidence): raise ApiError(400,'业务依据格式无效')
+    if not isinstance(evidence,list) or len(evidence)>len(txs) or any(not isinstance(item,dict) or any(key not in allowed or not isinstance(value,str) or len(value)>500 for key,value in item.items()) for item in evidence):
+        raise ApiError(400,'业务依据格式无效')
     account=reconciliation.normalize(payload.get('account_name'))
-    try: full=json.loads(client.get('profile_json') or '{}').get('enterprise_name','')
-    except (ValueError,TypeError,AttributeError): full=''
+    full=client.get('enterprise_name','')
     if not account or account not in {reconciliation.normalize(client['name']),reconciliation.normalize(full)}: raise ApiError(400,'本方名称必须与客户名称或企业全称一致')
     out=reconciliation.match(txs,ivs,account,payload.get('account_needs_review',False),conn,cid)
-    matches={m['transaction_index']:m for m in out['matches']}
+    matches={match['transaction_index']:match for match in out['matches']}
+    receipts=payload.get('receipts') or []
+    receipt_matches={row['transaction_index']:row for row in reconciliation.match_receipts(txs,receipts)['matches']} if receipts else {}
     rows=[]
     for index,t in enumerate(txs):
-        m=matches.get(index); ii=m.get('invoice_index') if m else None
-        reasons=[]; basis=[]; voucher=None; classification_evidence=None; expense_classification=None
-        classification=out['classification_transactions'][index]
-        rule_suggestion=classification.get('rule_suggestion')
-        if not m or m['status']!='matched' or ii is None:
-            reasons=(m or {}).get('reasons') or ['未找到唯一匹配发票']
-        else:
-            inv=ivs[ii]
-            ev=evidence[index] if index<len(evidence) else {}
-            existing,_=_existing_record(conn,cid,t,inv)
+        match=matches.get(index); ii=match.get('invoice_index') if match else None
+        row={'transaction_index':index,'invoice_index':ii,'matched':bool(match and match['status']=='matched' and ii is not None),
+             'status':'review','reason':'','counterparty':reconciliation.normalize(t.get('counterparty')),
+             'amount_fen':reconciliation.fen(t.get('amount')),'voucher':None,'expense_classification':None,
+             'basis':[],'classification':dict(out['classification_transactions'][index]),'classification_evidence':None}
+        if not row['matched']:
+            row['reason']='；'.join((match or {}).get('reasons') or ['未找到唯一匹配发票'])
+            rows.append(row); continue
+        inv=ivs[ii]; ev=evidence[index] if index<len(evidence) else {}
+        try:
+            existing,error=_existing_record(conn,cid,t,inv)
+            if error: raise ApiError(409,error)
+            posted=_record_posting(conn,cid,existing,t)
+            receipt_pair=receipt_matches.get(index,{})
+            receipt=receipts[receipt_pair['receipt_index']] if receipt_pair.get('status')=='matched' else None
+            if not posted: posted=_receipt_posting(conn,cid,t,receipt)
+            if posted:
+                row.update(posted,status='posted',id=existing['id'] if existing else None)
+                if not existing or not conn.execute("SELECT 1 FROM vouchers WHERE id=? AND source_type='reconciliation' AND source_id=?",(posted['voucher_id'],str(existing['id']))).fetchone():
+                    row['linked_voucher_id']=posted['voucher_id']
+                if existing:
+                    meta=json.loads(existing.get('batch_metadata_json') or '{}')
+                    row['classification']=meta.get('classification') or row['classification']
+                    row['automatic_posting']=meta.get('automatic_posting') or {'policy':'matched_document_direct_post','matched_source':'invoice','linked_voucher_id':posted['voucher_id']}
+                else: row['automatic_posting']={'policy':'matched_document_direct_post','matched_source':'invoice','linked_voucher_id':posted['voucher_id']}
+                rows.append(row); continue
+            classification=row['classification']
             if existing:
-                try:
-                    old_meta=json.loads(existing.get('batch_metadata_json') or '{}')
-                    old_class=old_meta.get('classification') or {}
-                    old_suggestion=old_class.get('rule_suggestion')
-                    if (old_meta.get('classification_inputs')==_classification_inputs(inv)
-                            and old_meta.get('suggestion_context')==_suggestion_context(txs)
-                            and isinstance(old_suggestion,dict) and old_suggestion.get('status')=='provisional'):
-                        rule_suggestion=old_suggestion
-                except (ValueError,TypeError,AttributeError):
-                    pass
-            explicit_treatment=ev.get('treatment')
-            selected_code=ev.get('business_account_code')
-            if selected_code:
-                selected=_leaf(conn,cid,selected_code)
-                valid=selected and selected['report_key'] not in ('cash','tax_payable','prior_adjustment')
-                if valid and explicit_treatment=='recognize_invoice' and 2<=len(str(ev.get('evidence_note') or '').strip())<=500:
-                    classification={'status':'suggested','account_code':selected['code'],'account_name':selected['name'],
-                        'basis':'人工核实选择业务科目：'+str(ev['evidence_note']).strip(), 'rule_ids':[], 'source_urls':[]}
-                    classification_evidence={'source':'user_selected_account','account_code':selected['code'],
-                        'account_name':selected['name'],'evidence_note':str(ev['evidence_note']).strip()}
-                else:
-                    classification={'status':'review','account_code':None,'account_name':None,
-                        'basis':'选择有效的业务末级科目、发票业务处理方式并填写具体依据'}
-            transaction_note=reconciliation.normalize(t.get('note'))
-            prepayment_note='合同' in transaction_note and '预付' in transaction_note
-            if (not selected_code and not reconciliation.normalize(inv.get('business_purpose'))
-                    and (any(x in transaction_note for x in ('不','非','未','待','可能','拟','假设','或者','或许','实际为'))
-                         or sum(1 for use in NOTE_USES if use in transaction_note)>1)):
-                classification={'status':'review','account_code':None,'account_name':None,
-                    'basis':'清单备注包含否定或不确定的用途，不能自动确定业务科目'}
-            note_classification=_note_classification(conn,cid,t,inv) if not selected_code and explicit_treatment in (None,'','recognize_invoice') and not prepayment_note else None
-            if note_classification:
-                classification,classification_evidence=note_classification
-            # The user accepts the displayed recommendation for classification;
-            # retain its provenance and do not treat it as a journal entry.
-            if (not selected_code and explicit_treatment in (None,'','recognize_invoice')
-                    and not prepayment_note and rule_suggestion
-                    and rule_suggestion.get('status')=='provisional'
-                    and classification.get('status')!='suggested'
-                    and not any(x in transaction_note for x in ('不','非','未','待','可能','拟','假设','或者','或许','实际为'))
-                    and sum(1 for use in NOTE_USES if use in transaction_note)<=1):
-                recommended=_leaf(conn,cid,rule_suggestion.get('account_code'))
-                if recommended and recommended['report_key'] not in ('cash','tax_payable','prior_adjustment'):
-                    classification={'status':'suggested','account_code':recommended['code'],
-                        'account_name':recommended['name'],'basis':rule_suggestion.get('basis',''),
-                        'rule_ids':rule_suggestion.get('rule_ids',[]),'source_urls':rule_suggestion.get('source_urls',[])}
-                    classification_evidence={'source':'accepted_rule_suggestion','account_code':recommended['code'],
-                        'account_name':recommended['name'],'basis':rule_suggestion.get('basis',''),
-                        'rule_ids':rule_suggestion.get('rule_ids',[]),'review':rule_suggestion.get('review','')}
-            if rule_suggestion is not None:
-                classification['rule_suggestion']=rule_suggestion
-            tx=reconciliation.fen(t.get('amount'))
-            # A deliberately selected prepayment or settlement is a separate
-            # accounting workflow and must continue through its evidence and
-            # balance checks; do not silently recategorize it as an expense.
-            explicit_accounting=explicit_treatment in ('contract_prepayment','settle_payable','settle_receivable')
-            if tx is not None and tx<0 and not explicit_accounting:
-                if any(word in transaction_note for word in ('预付','结清','应付','应收','还款','偿还','冲销')):
-                    reasons.append('清单涉及预付款或往来结算，请确认业务处理方式后再记账')
-                try: expense_date=finance._date(t.get('date'))
-                except ApiError: expense_date=''; reasons.append('流水日期无效')
-                if t.get('direction_needs_review'): reasons.append('流水收付款方向尚未确认')
-                total=reconciliation.fen(inv.get('amount'))
-                if not total or total<=0 or abs(tx)!=total: reasons.append('流水与发票金额须一致且有效')
-                raw_net='' if inv.get('net_amount') is None else str(inv.get('net_amount')).strip()
-                raw_tax='' if inv.get('tax_amount') is None else str(inv.get('tax_amount')).strip()
-                net=reconciliation.fen(inv.get('net_amount')); tax=reconciliation.fen(inv.get('tax_amount'))
-                if ((raw_net and (net is None or net<0)) or (raw_tax and (tax is None or tax<0)) or
-                        (raw_net and raw_tax and net is not None and tax is not None and net+tax!=total)):
-                    reasons.append('发票不含税金额、税额与价税合计不一致，请核实')
-                account=_leaf(conn,cid,classification.get('account_code'))
-                if (classification.get('status')!='suggested' or not account or account['category']=='liability'
-                        or account['report_key'] in ('cash','tax_payable','prior_adjustment','receivable','prepaid','advance')):
-                    reasons.append('发票与清单未能确定业务科目，请核实')
-                if not reasons:
-                    expense_classification={'account_code':account['code'],'account_name':account['name'],
-                        'amount_fen':abs(tx),'direction':'expense','date':expense_date,
-                        'source':(classification_evidence or {}).get('source','invoice_and_list')}
-                    basis.append(classification.get('basis',''))
-                    basis.append('已记录支出方向和业务科目，未生成会计凭证')
-                lines=[]
-            else:
-                lines,reasons,basis=_draft(conn,cid,t,inv,classification,ev)
-            if classification_evidence and classification_evidence['source']=='transaction_note':
-                basis.append('业务用途依据：流水备注原文“'+classification_evidence['raw_note']+'”；按明确用途结合发票项目匹配科目规则')
-            if not reasons and expense_classification is None:
-                ev=evidence[index] if index<len(evidence) else {}
-                voucher={'date':t['date'],'summary':('收款 ' if reconciliation.fen(t['amount'])>0 else '付款 ')+reconciliation.normalize(t.get('counterparty')),'lines':lines}
-                try: finance._open(conn,cid,t['date'][:7])
-                except ApiError as err: reasons.append(err.message)
-                for line in lines:
-                    parent=line.get('counterparty_parent_code')
-                    if parent:
-                        account_matches=conn.execute('SELECT code FROM accounts WHERE client_id=? AND code LIKE ? AND length(code)=? AND name=?',(cid,parent+'%',len(parent)+2,reconciliation.normalize(t.get('counterparty')))).fetchall()
-                        if len(account_matches)>1 or (account_matches and not _leaf(conn,cid,account_matches[0]['code'])): reasons.append('同名往来明细不唯一或不是末级科目，请核对')
-                        elif not account_matches and (conn.execute('SELECT 1 FROM voucher_lines WHERE client_id=? AND account_code=?',(cid,parent)).fetchone() or conn.execute('SELECT 1 FROM opening_balances WHERE client_id=? AND account_code=? AND (debit_fen<>0 OR credit_fen<>0)',(cid,parent)).fetchone()): reasons.append('上级科目已使用，不能直接新增公司明细，请先处理上级科目余额')
-                    elif line.get('account_code'):
-                        a=_leaf(conn,cid,line['account_code'])
-                        if a and finance._cash(a):
-                            duplicate=conn.execute("""SELECT 1 FROM vouchers v JOIN voucher_lines l ON l.voucher_id=v.id WHERE v.client_id=? AND v.status='active' AND v.date=? AND l.account_code=? AND l.debit_fen=? AND l.credit_fen=? LIMIT 1""",(cid,t['date'],line['account_code'],line.get('debit_fen',0),line.get('credit_fen',0))).fetchone()
-                            if duplicate:
-                                duplicate_note=ev.get('duplicate_review_note','')
-                                if not isinstance(duplicate_note,str) or not duplicate_note.strip(): reasons.append('存在同日期、金额和资金科目的凭证，请核对并填写重复核验说明')
-                                else: voucher['duplicate_review_note']=duplicate_note.strip()
-            _,existing_error=_existing_record(conn,cid,t,inv)
-            if existing_error: reasons.append(existing_error)
-        if reasons: voucher=None
-        if reasons: expense_classification=None
-        rows.append({'transaction_index':index,'invoice_index':ii,'matched':bool(m and m['status']=='matched' and ii is not None),'status':'review' if reasons else ('expense_classified' if expense_classification else 'ready'),'reason':'；'.join(reasons),'counterparty':reconciliation.normalize(t.get('counterparty')),'amount_fen':reconciliation.fen(t.get('amount')),'voucher':voucher,'expense_classification':expense_classification,'basis':basis,'classification':classification,'classification_evidence':classification_evidence})
+                meta=json.loads(existing.get('batch_metadata_json') or '{}')
+                old=meta.get('classification') or {}
+                if meta.get('classification_inputs')==_classification_inputs(inv) and old.get('account_code'):
+                    classification=dict(old)
+            note_classification=_note_classification(conn,cid,t,inv)
+            if note_classification and not ev.get('business_account_code'):
+                classification,row['classification_evidence']=note_classification
+            suggestion=classification.get('rule_suggestion') or row['classification'].get('rule_suggestion') or {}
+            if (not classification.get('account_code') or classification.get('status')!='suggested') and suggestion.get('account_code'):
+                classification={'status':'suggested','account_code':suggestion['account_code'],'account_name':suggestion.get('account_name'),
+                                'sub_account':suggestion.get('sub_account',''),'basis':suggestion.get('basis',''),
+                                'rule_ids':suggestion.get('rule_ids',[]),'source_urls':suggestion.get('source_urls',[]),'rule_suggestion':suggestion}
+                row['classification_evidence']={'source':'accepted_rule_suggestion','account_code':suggestion['account_code'],'basis':suggestion.get('basis','')}
+            elif suggestion: classification['rule_suggestion']=suggestion
+            voucher,basis,provenance=_automatic_draft(conn,cid,t,inv,classification,ev)
+            finance._open(conn,cid,voucher['date'][:7])
+            for line in voucher['lines']:
+                if line.get('account_code')!=provenance['funding_account_code']: continue
+                duplicates=conn.execute("SELECT DISTINCT v.id FROM vouchers v JOIN voucher_lines l ON l.voucher_id=v.id WHERE v.client_id=? AND v.status='active' AND v.date=? AND l.account_code=? AND l.debit_fen=? AND l.credit_fen=?",(cid,voucher['date'],line['account_code'],line['debit_fen'],line['credit_fen'])).fetchall()
+                if duplicates:
+                    # Source identity and the transaction fingerprint prevent
+                    # duplicates. Different uniquely matched documents may
+                    # legitimately have the same date and cash amount.
+                    voucher['duplicate_review_note']=ev.get('duplicate_review_note','').strip() or '按用户匹配即入账策略：不同单据或交易标识的同日同额独立流水'
+                    provenance['duplicate_policy']='automatic_distinct_matched_source'
+                    provenance['same_amount_voucher_ids']=[item['id'] for item in duplicates]
+            if provenance.get('classification_source')=='uncertain_transaction_note':
+                row['classification_evidence']={'source':'uncertain_transaction_note','raw_note':reconciliation.normalize(t.get('note'))}
+            elif provenance['subject_source'].endswith('_fallback'):
+                classification=dict(classification,status='suggested',account_code=provenance['subject_account_code'],account_name=provenance['subject_name'],source=provenance['subject_source'])
+            row.update(status='ready',voucher=voucher,basis=basis,classification=classification,automatic_posting=provenance)
+        except (ApiError,ValueError,TypeError,AttributeError) as error:
+            row['reason']=getattr(error,'message','已保存匹配数据异常，请重新核对')
+        rows.append(row)
     result={'client_id':cid,'client_name':client['name'],'rows':rows,'unmatched_invoices':out['unmatched_invoices']}
-    token_data={'input':{k:payload.get(k) for k in ('client_id','account_name','account_needs_review','transactions','invoices','evidence')},'result':result}
+    token_data={'input':{key:payload.get(key) for key in ('client_id','account_name','account_needs_review','transactions','invoices','receipts','evidence','archive_id')},'result':result}
     result['preview_token']=hashlib.sha256(json.dumps(token_data,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     return result
 
@@ -425,118 +547,183 @@ def save_batch(conn,payload,user):
         draft=preview(conn,payload)
         if payload.get('preview_token')!=draft['preview_token']: raise ApiError(409,'预览或账套状态已变化，请重新核对')
         selected=payload.get('selected_indices')
-        if selected is None: selected=[r['transaction_index'] for r in draft['rows'] if r['status'] in ('ready','expense_classified')]
+        if selected is None: selected=[r['transaction_index'] for r in draft['rows'] if r['status'] in ('ready','posted')]
         if not isinstance(selected,list) or not selected or any(type(x) is not int for x in selected) or len(set(selected))!=len(selected): raise ApiError(400,'请选择需要保存的就绪项目')
         by_index={r['transaction_index']:r for r in draft['rows']}
-        if any(i not in by_index or by_index[i]['status'] not in ('ready','expense_classified') for i in selected): raise ApiError(409,'所选项目仍需核对，未保存任何记录')
+        if any(i not in by_index or by_index[i]['status'] not in ('ready','posted') for i in selected): raise ApiError(409,'所选项目仍需核对，未保存任何记录')
         selected_rows=[by_index[i] for i in selected]
         results=[]
         for row in selected_rows:
             ti,ii=row['transaction_index'],row['invoice_index']
-            try: saved=_store_match(conn,payload,draft,row,user)
+            try: saved=({key:row[key] for key in ('id','voucher_id','voucher_ref','voucher_date','period','posted_lines','already_posted') if key in row} if row['status']=='posted' and row.get('id') else _store_match(conn,payload,draft,row,user))
             except ApiError as err:
                 raise ApiError(err.status, '第 %d 条流水保存失败：%s；整批未保存'%(ti+1,err.message),{'transaction_index':ti,'cause':err.details})
+            if row['status']=='posted' and row.get('id'): _attach_sources(conn,payload,row,saved,user)
             if row['classification_evidence']:
                 audit(conn,user,'reconcile_auto_classification','reconciliation_records',saved['id'],row['classification_evidence'])
+            if saved.get('voucher_id'): saved['status']='posted'
             results.append({'transaction_index':ti,'invoice_index':ii,**saved})
-        periods=sorted({(x['voucher']['date'] if x['voucher'] else x['expense_classification']['date'])[:7] for x in selected_rows})
+        periods=sorted({(x['voucher']['date'] if x['voucher'] else x['voucher_date'])[:7] for x in selected_rows})
         return {'client_id':draft['client_id'],'client_name':draft['client_name'],'periods':periods,'results':results}
 
 
 def auto_post(conn,payload,user):
-    """Re-evaluate each candidate under a write lock and post only ready rows.
-
-    Each row has its own transaction: a duplicate or other conflict must not
-    prevent independent, fully supported rows from reaching the balance table.
-    A match is an automated comparison, not a verification of invoice validity
-    or a human review of OCR and accounting treatment.
-    """
+    """Post unique invoice matches, rechecking under a separate lock per row."""
     initial=preview(conn,payload)
-    client=finance._client(conn,initial['client_id'])
-    if client.get('standard')!='small2013':
-        rows=[]
-        for row in initial['rows']:
-            result={k:row[k] for k in ('transaction_index','invoice_index','counterparty','amount_fen','basis','classification','classification_evidence')}
-            result.update(status='review',reason='当前账套未设置为小企业会计准则；不能按小企业会计准则自动记账，请核实适用准则及账套设置。')
-            rows.append(result)
-        return {'client_id':initial['client_id'],'client_name':initial['client_name'],'rows':rows,
-                'unmatched_invoices':initial['unmatched_invoices'],'periods':[],
-                'invoice_verification':'not_checked','human_review':'not_performed'}
     results=[]; periods=set()
     for original in initial['rows']:
         index=original['transaction_index']
         try:
             with finance._write(conn):
-                current=preview(conn,payload)
-                row=current['rows'][index]
-                result={k:row[k] for k in ('transaction_index','invoice_index','counterparty','amount_fen','basis','classification','classification_evidence')}
+                row=preview(conn,payload)['rows'][index]
+                result={key:row[key] for key in ('transaction_index','invoice_index','counterparty','amount_fen','basis','classification','classification_evidence')}
                 if not row['matched']:
                     result.update(status='review',reason=row['reason'])
+                elif row['status']=='posted' and row.get('id'):
+                    result.update({key:row[key] for key in ('id','voucher_id','voucher_ref','voucher_date','period','posted_lines','already_posted')},status='posted',reason='')
+                    _attach_sources(conn,payload,row,result,user)
+                    periods.add(row['period'])
                 else:
-                    saved=_store_match(conn,payload,current,row,user)
-                    if row['status']=='expense_classified':
-                        if row['classification_evidence']:
+                    saved=_store_match(conn,payload,initial,row,user)
+                    if row['status'] in ('ready','posted'):
+                        result.update(saved,status='posted',reason='')
+                        periods.add(saved['period'])
+                        if row.get('classification_evidence'):
                             audit(conn,user,'reconcile_auto_classification','reconciliation_records',saved['id'],row['classification_evidence'])
-                        result.update(saved,status='expense_classified',reason='',expense_classification=row['expense_classification'])
-                        periods.add(row['expense_classification']['date'][:7])
-                    elif row['status']=='ready':
-                        if row['classification_evidence']:
-                            audit(conn,user,'reconcile_auto_classification','reconciliation_records',saved['id'],row['classification_evidence'])
-                        result.update(saved, status='posted', reason='')
-                        periods.add(row['voucher']['date'][:7])
-                    else:
-                        result.update(saved, status='saved_pending', reason=row['reason'])
+                    else: result.update(saved,status='saved_pending',reason=row['reason'])
+                if row.get('automatic_posting'): result['automatic_posting']=row['automatic_posting']
             results.append(result)
-        except ApiError as err:
-            # _write has rolled back all changes for this candidate.
-            results.append({k:original[k] for k in ('transaction_index','invoice_index','counterparty','amount_fen','basis','classification','classification_evidence')} |
-                           {'status':'review','reason':err.message})
+        except (ApiError,ValueError,TypeError,AttributeError) as error:
+            results.append({key:original[key] for key in ('transaction_index','invoice_index','counterparty','amount_fen','basis','classification','classification_evidence')} |
+                           {'status':'review','reason':getattr(error,'message','已保存匹配数据异常，请重新核对')})
     return {'client_id':initial['client_id'],'client_name':initial['client_name'],'rows':results,
             'unmatched_invoices':initial['unmatched_invoices'],'periods':sorted(periods),
             'invoice_verification':'not_checked','human_review':'not_performed'}
 
 
 def retry_saved(conn,client_id,user):
-    """Retry unposted records with their original stored classification.
-
-    Historical records without a stored recommendation are left for review:
-    recomputing a single record can change a recommendation based on a batch.
-    """
+    """Upgrade saved matched records to actual vouchers; active postings are skipped."""
     if isinstance(client_id,bool): raise ApiError(400,'客户无效')
     try: cid=int(client_id)
     except (TypeError,ValueError): raise ApiError(400,'请选择客户账套')
     client=finance._client(conn,cid)
-    records=conn.execute("""SELECT r.* FROM reconciliation_records r
-        WHERE r.client_id=? AND r.status IN ('matched','reviewed') AND NOT EXISTS
-        (SELECT 1 FROM vouchers v WHERE v.client_id=r.client_id AND v.source_type='reconciliation'
-        AND v.source_id=CAST(r.id AS TEXT) AND v.status='active') ORDER BY r.id""",(cid,)).fetchall()
+    records=conn.execute("SELECT * FROM reconciliation_records WHERE client_id=? AND status IN ('matched','reviewed') ORDER BY id",(cid,)).fetchall()
     results=[]; periods=set()
-    for record in records:
+    for stored in records:
+        record=dict(stored)
         try:
-            meta=json.loads(record['batch_metadata_json'] or '{}')
-            classification=meta.get('classification') or {}
-            suggestion=classification.get('rule_suggestion') if isinstance(classification,dict) else None
-            previously_classified=(isinstance(classification,dict) and classification.get('status')=='suggested'
-                                   and isinstance(classification.get('account_code'),str)
-                                   and bool(classification['account_code'].strip()))
-            provisional=isinstance(suggestion,dict) and suggestion.get('status')=='provisional'
-            if not previously_classified and not provisional:
-                results.append({'id':record['id'],'status':'review','reason':'原记录未保存推荐科目，请人工核实'}); continue
             transaction=json.loads(record['transaction_json']); invoice=json.loads(record['invoice_json'])
-            prior_expense=meta.get('expense_classification')
-            if (isinstance(prior_expense,dict) and isinstance(prior_expense.get('date'),str) and
-                    meta.get('classification_inputs')==_classification_inputs(invoice)):
-                results.append({'id':record['id'],'status':'expense_classified','reason':'',
-                                'expense_classification':prior_expense})
-                periods.add(prior_expense['date'][:7])
-                continue
+            if _record_posting(conn,cid,record,transaction): continue
+            meta=json.loads(record.get('batch_metadata_json') or '{}')
             evidence=meta.get('evidence') or {}
-            payload={'client_id':cid,'account_name':record['account_name'],'transactions':[transaction],
-                     'invoices':[invoice],'evidence':[evidence]}
+            payload={'client_id':cid,'account_name':record['account_name'],'transactions':[transaction],'invoices':[invoice],'evidence':[evidence]}
+            context=meta.get('suggestion_context')
+            index=0
+            if isinstance(context,list) and 1<=len(context)<=100 and all(isinstance(item,dict) for item in context):
+                matching=[i for i,item in enumerate(context) if all(reconciliation.normalize(item.get(key))==reconciliation.normalize(transaction.get(key)) for key in ('date','amount','counterparty','note'))]
+                if len(matching)==1:
+                    index=matching[0]; payload['transactions']=[dict(item) for item in context]; payload['transactions'][index]=transaction
+                    payload['evidence']=[{} for _ in context]; payload['evidence'][index]=evidence
             outcome=auto_post(conn,payload,user)
-            row=outcome['rows'][0]
-            results.append({'id':record['id'],**row})
-            periods.update(outcome['periods'])
-        except (ValueError,TypeError,AttributeError,ApiError) as err:
-            results.append({'id':record['id'],'status':'review','reason':getattr(err,'message','已保存记录数据异常，请人工核实')})
+            row=outcome['rows'][index]
+            results.append({'id':record['id'],**row}); periods.update(outcome['periods'])
+        except (ApiError,ValueError,TypeError,AttributeError) as error:
+            results.append({'id':record['id'],'status':'review','reason':getattr(error,'message','已保存记录数据异常，请重新核对')})
     return {'client_id':cid,'client_name':client['name'],'rows':results,'periods':sorted(periods)}
+
+
+def _receipt_account(conn,cid,code,sub,user):
+    """Leaf for the suggested account, creating the named subaccount when the parent allows it."""
+    parent=conn.execute('SELECT * FROM accounts WHERE client_id=? AND code=?',(cid,code)).fetchone()
+    if not parent: raise ApiError(409,'账套中没有科目 '+code)
+    if sub:
+        named=[dict(x) for x in conn.execute('SELECT * FROM accounts WHERE client_id=? AND code LIKE ? AND code<>? AND name=?',(cid,code+'%',code,sub))]
+        leaves=[x for x in named if _leaf(conn,cid,x['code'])]
+        if len(leaves)==1: return leaves[0]
+        if len(leaves)>1: raise ApiError(409,'科目 %s 下有多个名为“%s”的明细，请人工选择'%(code,sub))
+        used=_leaf(conn,cid,code) and (conn.execute('SELECT 1 FROM voucher_lines WHERE client_id=? AND account_code=?',(cid,code)).fetchone()
+            or conn.execute('SELECT 1 FROM opening_balances WHERE client_id=? AND account_code=? AND (debit_fen<>0 OR credit_fen<>0)',(cid,code)).fetchone())
+        if not used: return finance._create_account(conn,cid,{'parent_code':code,'name':sub},user)
+    leaf=_leaf(conn,cid,code)
+    if not leaf: raise ApiError(409,'科目 %s 已有明细科目，请人工选择末级科目'%code)
+    return leaf
+
+
+def post_receipts(conn,payload,user):
+    """Post every unique receipt match; overlapping invoices share one real voucher."""
+    if not isinstance(payload,dict): raise ApiError(400,'核对批次无效')
+    if isinstance(payload.get('client_id'),bool): raise ApiError(400,'客户无效')
+    try: cid=int(payload.get('client_id'))
+    except (TypeError,ValueError): raise ApiError(400,'请选择客户账套')
+    client=finance._client(conn,cid)
+    import source_archive
+    source_archive.validate(conn,cid,payload.get('archive_id'))
+    txs=payload.get('transactions'); receipts=payload.get('receipts'); ivs=payload.get('invoices') or []
+    if not isinstance(txs,list) or not txs or len(txs)>500 or not isinstance(receipts,list) or not receipts: raise ApiError(400,'需要流水和银行回单')
+    account=reconciliation.normalize(payload.get('account_name'))
+    full=client.get('enterprise_name','')
+    if not account or account not in {reconciliation.normalize(client['name']),reconciliation.normalize(full)}: raise ApiError(400,'本方名称必须与客户名称或企业全称一致')
+    evidence=payload.get('evidence') or []
+    allowed={'treatment','bank_account_code','settlement_account_code','tax_treatment','tax_account_code','evidence_note','duplicate_review_note','business_account_code'}
+    if not isinstance(evidence,list) or len(evidence)>len(txs) or any(not isinstance(item,dict) or any(key not in allowed or not isinstance(value,str) or len(value)>500 for key,value in item.items()) for item in evidence):
+        raise ApiError(400,'业务依据格式无效')
+    out=reconciliation.match(txs,ivs,account,False,conn,cid)
+    pairs=reconciliation.match_receipts(txs,receipts)['matches']
+    invoice_matches={item['transaction_index']:item for item in out['matches'] if item['status']=='matched'}
+    invoice_results={}
+    if invoice_matches and len(txs)<=100 and len(ivs)<=100:
+        invoice_results={row['transaction_index']:row for row in auto_post(conn,payload,user)['rows']}
+    rows=[]; periods=set()
+    for pair in pairs:
+        ti=pair['transaction_index']; t=txs[ti]; result={'transaction_index':ti,'receipt_index':pair.get('receipt_index')}
+        if ti in invoice_matches:
+            invoice_result=invoice_results.get(ti)
+            if invoice_result is None:
+                match=invoice_matches[ti]; one=dict(payload,transactions=[t],invoices=[ivs[match['invoice_index']]],receipts=[],evidence=[evidence[ti] if ti<len(evidence) else {}])
+                invoice_result=auto_post(conn,one,user)['rows'][0]
+            if invoice_result['status']=='posted':
+                result.update(invoice_result,transaction_index=ti,receipt_index=pair.get('receipt_index'))
+                rows.append(result); periods.add(result['period']); continue
+        if pair['status']!='matched':
+            rows.append(dict(result,status='review',reason='；'.join(pair['reasons']))); continue
+        receipt=receipts[pair['receipt_index']]
+        try:
+            with finance._write(conn):
+                own=reconciliation.normalize(receipt.get('own_name'))
+                if own and own not in {account,reconciliation.normalize(client['name']),reconciliation.normalize(full)}:
+                    raise ApiError(409,'回单本方名称与账套不一致')
+                existing=_receipt_posting(conn,cid,t,receipt)
+                record=conn.execute('SELECT * FROM reconciliation_records WHERE client_id=? AND transaction_key=?',(cid,reconciliation._transaction_key(t))).fetchone()
+                if not existing and record: existing=_record_posting(conn,cid,dict(record),t)
+                if existing:
+                    source_archive.attach(conn,cid,payload.get('archive_id'),user,t,receipt=receipt,
+                                          voucher_id=existing['voucher_id'],basis={'matching_basis':pair.get('reasons') or ['流水与银行回单唯一匹配'],
+                                          'evidence':evidence[ti] if ti<len(evidence) else {},'account_name':account})
+                    result.update(existing,status='posted',reason='该回单已生成凭证')
+                    result['lines']=result['posted_lines']; rows.append(result); periods.add(result['period']); continue
+                classification=out['classification_transactions'][ti] or {}
+                suggestion=classification.get('rule_suggestion') or {}
+                if suggestion.get('account_code'):
+                    classification=dict(classification,account_code=suggestion['account_code'],account_name=suggestion.get('account_name'),sub_account=suggestion.get('sub_account',''))
+                ev=evidence[ti] if ti<len(evidence) else {}
+                voucher,basis,provenance=_automatic_draft(conn,cid,t,None,classification,ev,'receipt',receipt)
+                finance._open(conn,cid,voucher['date'][:7])
+                bank_code=provenance['funding_account_code']; value=reconciliation.fen(t.get('amount'))
+                duplicates=conn.execute("SELECT DISTINCT v.id FROM vouchers v JOIN voucher_lines l ON l.voucher_id=v.id WHERE v.client_id=? AND v.status='active' AND v.date=? AND l.account_code=? AND l.debit_fen=? AND l.credit_fen=?",(cid,voucher['date'],bank_code,max(value,0),max(-value,0))).fetchall()
+                if duplicates:
+                    provenance['duplicate_policy']='automatic_distinct_matched_source'
+                    provenance['same_amount_voucher_ids']=[item['id'] for item in duplicates]
+                lines=finance._lines(conn,cid,reconciliation._resolve_voucher_lines(conn,cid,voucher['lines'],t,user))
+                vid=finance._insert_voucher(conn,cid,voucher['date'],voucher['summary'],lines,user,'bank_receipt',normalize_receipt_source(t,receipt),attachment_count=1,counterparty=reconciliation.normalize(t.get('counterparty')))
+                source_archive.attach(conn,cid,payload.get('archive_id'),user,t,receipt=receipt,voucher_id=vid,
+                                      basis={'matching_basis':basis,'evidence':ev,'classification':classification,
+                                             'automatic_posting':provenance,'account_name':account})
+                audit(conn,user,'reconcile_receipt_post','vouchers',vid,{'receipt':receipt.get('number'),'transaction_key':reconciliation._transaction_key(t),'automatic_posting':provenance,'rule_ids':suggestion.get('rule_ids',[]),
+                      'transaction':{key:t.get(key,'') for key in ('date','amount','counterparty','note','source')},
+                      'matched_receipt':{key:receipt.get(key,'') for key in ('number','date','amount','counterparty','own_name','note','source')}})
+                posting=reconciliation._posting_result(conn,cid,vid,False,t)
+                business=next(line for line in posting['posted_lines'] if line['account_code']!=bank_code)
+                result.update(posting,status='posted',reason='',account_code=business['account_code'],account_name=business['account_name'],basis=basis,automatic_posting=provenance,lines=posting['posted_lines'])
+                periods.add(result['period']); rows.append(result)
+        except ApiError as error: rows.append(dict(result,status='review',reason=error.message))
+    return {'client_id':cid,'client_name':client['name'],'rows':rows,'periods':sorted(periods)}

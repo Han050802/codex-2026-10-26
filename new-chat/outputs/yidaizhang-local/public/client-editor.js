@@ -3,6 +3,14 @@ const formOptions = ['公司', '个体工商户', '个人独资企业', '合伙�
 const statusOptions = ['存续', '在业', '吊销', '注销', '迁入', '迁出', '停业', '清算'];
 const regionOptions = ['通用', '北京', '天津', '河北', '山西', '内蒙古', '辽宁', '大连', '吉林', '黑龙江', '上海', '江苏', '浙江', '宁波', '安徽', '福建', '厦门', '江西', '山东', '青岛', '河南', '湖北', '湖南', '广东', '深圳', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
 const industryOptions = ['其他专业咨询', '商务服务业', '软件和信息技术服务业', '科技推广和应用服务业', '批发业', '零售业', '制造业', '建筑业', '餐饮业', '住宿业', '交通运输业', '文化、体育和娱乐业', '居民服务业', '教育', '卫生和社会工作', '租赁业', '其他服务业'];
+export function getIndustryOptions(saved = []) {
+  const values = new Map();
+  for (const value of [...industryOptions, ...saved]) {
+    const name = String(value ?? '').trim(), key = name.toLowerCase();
+    if (name && !values.has(key)) values.set(key, name);
+  }
+  return [...values.values()];
+}
 const sensitiveFields = ['legal_id_number', 'contact_id_number', 'annual_report_password'];
 const requiredLabels = { name: '客户名称', enterprise_name: '企业名称', tax_no: '税号', industry: '所属行业', enterprise_form: '企业形式', region: '所属地区', filing_type: '报税类型', accountant_id: '指派会计', start_period: '建账年月', taxpayer_type: '纳税性质', standard: '会计制度' };
 const limits = { name: 150, enterprise_name: 200, tax_no: 30, industry: 80, region: 100, mnemonic: 80, legal_representative: 80, legal_phone: 30, contact_name: 80, contact_phone: 30, registered_address: 100, business_address: 100, business_scope: 1000, bookkeeper: 80, cashier: 80, boss_name: 80, boss_phone: 30, boss_note: 1000 };
@@ -44,7 +52,7 @@ export function createClientEditor(options) {
     enterprise_form: { values: formOptions.map(x => [x, x]) },
     region: { values: regionOptions.map(x => [x, x]) },
     business_status: { values: statusOptions.map(x => [x, x]) },
-    industry: { values: industryOptions.map(x => [x, x]), custom: true },
+    industry: { values: getIndustryOptions([...(options.industries || []), base.industry]).map(x => [x, x]), custom: true },
     accountant_id: { values: users.map(u => [String(u.id), u.name]) },
     standard: { values: [['small2013', '2013小企业会计准则'], ['enterprise2007', '2007企业会计准则']], disabled: Boolean(original) },
     labels: { values: [...new Set([...globalLabels, ...base.labels])].map(x => [x, x]), custom: true, multiple: true }
@@ -58,6 +66,7 @@ export function createClientEditor(options) {
   }
   function comboField(text, name, extra = {}) {
     const config = comboConfig[name], required = Boolean(requiredLabels[name]); const disabled = config.disabled;
+    if (name === 'industry') extra = { placeholder: '请选择或输入所属行业', ...extra };
     return `<div class="ce-field ${extra.wide ? 'ce-span-2' : ''}" data-ce-field="${name}">${labelHtml(text, name, required)}<div class="ce-control"><div class="ce-select ${disabled ? 'is-disabled' : ''}" data-ce-select="${name}"><input id="client-field-${name}" name="${name}_search" data-ce-combo="${name}" type="text" value="${esc(labelFor(name))}" placeholder="${esc(extra.placeholder || (name === 'labels' ? '请选择标签' : `请选择${text}`))}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ce-options-${name}" autocomplete="off" ${disabled ? 'disabled' : ''} ${required ? 'aria-required="true"' : ''} aria-invalid="${Boolean(fieldErrors[name])}"><input type="hidden" name="${name}" data-ce-value="${name}" value="${esc(name === 'labels' ? JSON.stringify(draft.labels) : draft[name])}"><span class="ce-select-icon">⌄</span><div class="ce-options" id="ce-options-${name}" role="listbox" ${config.multiple ? 'aria-multiselectable="true"' : ''} hidden></div></div>${errorHtml(name)}</div></div>`;
   }
   function longField(text, name, max, line = false) { return `<div class="ce-field ce-span-2 ${line ? 'ce-address-line' : ''}" data-ce-field="${name}">${labelHtml(text, name, false)}<div class="ce-control"><textarea id="client-field-${name}" name="${name}" data-ce-input="${name}" maxlength="${max}" aria-describedby="ce-counter-${name} ce-error-${name}">${esc(draft[name])}</textarea><div class="ce-counter" id="ce-counter-${name}" data-ce-counter="${name}">${charCount(draft[name])} / ${max}</div>${errorHtml(name)}</div></div>`; }
@@ -68,7 +77,18 @@ export function createClientEditor(options) {
   function updateDirty() { root?.querySelector('.ce-dirty-state') && (root.querySelector('.ce-dirty-state').textContent = dirty() ? '有未保存的更改' : ''); }
   function clearError(name) { delete fieldErrors[name]; const holder = root?.querySelector(`[data-ce-field="${name}"]`); const error = holder?.querySelector('.ce-field-error'); if (error) { error.hidden = true; error.textContent = ''; } holder?.querySelector('input,textarea')?.setAttribute('aria-invalid', 'false'); }
   function setValue(name, value) { if (name === 'labels') draft.labels = normalizeLabels(value); else draft[name] = String(value ?? ''); if (sensitiveFields.includes(name) && value) { clearSensitive.delete(name); const hint = root?.querySelector(`[data-private-hint="${name}"]`); if (hint) hint.textContent = privateHint(name); const button = root?.querySelector(`[data-ce-clear-sensitive="${name}"]`); if (button) button.textContent = '清空已保存'; } clearError(name); const canonical = form?.querySelector(`[data-ce-value="${name}"]`); if (canonical) canonical.value = name === 'labels' ? JSON.stringify(draft.labels) : draft[name]; if (comboConfig[name] && openCombo !== name) { const visible = root?.querySelector(`[data-ce-combo="${name}"]`); if (visible) visible.value = labelFor(name); } const counter = root?.querySelector(`[data-ce-counter="${name}"]`); if (counter) counter.textContent = `${charCount(draft[name])} / ${limits[name]}`; if (name === 'filing_type') { const label = root?.querySelector('[data-ce-filing-label]'); if (label) label.textContent = value === 'zero' ? '0申报' : '税款申报'; } updateDirty(); }
-  function filteredOptions(name) { const config = comboConfig[name]; const query = comboQuery.trim().toLowerCase(); let values = config.values.filter(([v, text]) => !query || String(text).toLowerCase().includes(query) || String(v).toLowerCase().includes(query)); if (config.custom && query && !config.values.some(([v, text]) => String(v).toLowerCase() === query || text.toLowerCase() === query)) values = [...values, [comboQuery.trim(), `使用“${comboQuery.trim()}”`]]; return values; }
+  function filteredOptions(name) {
+    const config = comboConfig[name], query = comboQuery.trim().toLowerCase();
+    let values = config.values.filter(([v, text]) => !query || String(text).toLowerCase().includes(query) || String(v).toLowerCase().includes(query));
+    if (config.custom && query) {
+      const exact = values.findIndex(([v]) => String(v).toLowerCase() === query);
+      if (exact < 0) {
+        const custom = [comboQuery.trim(), `使用“${comboQuery.trim()}”`];
+        values = config.multiple ? [...values, custom] : [custom, ...values];
+      } else if (!config.multiple) values = [values[exact], ...values.filter((_, index) => index !== exact)];
+    }
+    return values;
+  }
   function paintOptions() { if (!openCombo) return; const name = openCombo; const wrapper = root.querySelector(`[data-ce-select="${name}"]`), input = wrapper.querySelector('[data-ce-combo]'), list = wrapper.querySelector('[role=listbox]'); const values = filteredOptions(name); activeOption = Math.max(0, Math.min(activeOption, values.length - 1)); list.innerHTML = values.length ? values.map(([value, text], i) => { const selected = comboConfig[name].multiple ? draft.labels.includes(value) : String(draft[name]) === String(value); return `<button type="button" role="option" aria-selected="${selected}" id="ce-option-${name}-${i}" data-ce-option="${name}" data-value="${esc(value)}" class="${selected ? 'selected ' : ''}${i === activeOption ? 'highlighted' : ''}">${selected && comboConfig[name].multiple ? '✓ ' : ''}${esc(text)}</button>`; }).join('') : '<div class="ce-no-options">没有匹配选项</div>'; list.hidden = false; input.setAttribute('aria-expanded', 'true'); input.setAttribute('aria-activedescendant', values.length ? `ce-option-${name}-${activeOption}` : ''); wrapper.classList.add('is-open'); const box = wrapper.getBoundingClientRect?.(); const scrollBox = root.querySelector('.ce-scroll')?.getBoundingClientRect?.(); wrapper.classList.toggle('opens-up', Boolean(box && scrollBox && box.bottom + Math.min(280, values.length * 30) > scrollBox.bottom && box.top - scrollBox.top > 200)); list.querySelector('.highlighted')?.scrollIntoView?.({ block: 'nearest' }); }
   function openOptions(name, query = '') { if (comboConfig[name]?.disabled) return; if (openCombo && openCombo !== name) closeOptions(); openCombo = name; comboQuery = query; activeOption = 0; paintOptions(); }
   function closeOptions() { if (!openCombo || !root) return; const name = openCombo; const wrapper = root.querySelector(`[data-ce-select="${name}"]`); if (wrapper) { wrapper.querySelector('[role=listbox]').hidden = true; const input = wrapper.querySelector('[data-ce-combo]'); input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); input.value = labelFor(name); wrapper.classList.remove('is-open', 'opens-up'); } openCombo = null; comboQuery = ''; }

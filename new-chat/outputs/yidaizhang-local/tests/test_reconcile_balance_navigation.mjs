@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {focusCompanyBalance, renderCompanyBalance} from '../public/company-balance.js';
 
-const book={client:{id:18,name:'测试公司',start_period:'2025-01'},period:'2026-08',accounts:[
+const book={basis:'standard',client:{id:18,name:'测试公司',start_period:'2025-01'},period:'2026-08',accounts:[
   {code:'1002',name:'银行存款',category:'asset'},
   {code:'2202',name:'应付账款',category:'liability'},
   {code:'220201',name:'供应商',category:'liability'},

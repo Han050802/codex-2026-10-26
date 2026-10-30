@@ -16,3 +16,38 @@
 .sidebar.tax-sidebar{padding-top:7px;gap:4px}.sidebar.tax-sidebar>.side-item{height:70px;min-height:70px;flex-shrink:0}
 /* Use black data text on light workspace surfaces. */
 .workspace th,.workspace td,.workspace .muted,.workspace .table-foot,.workspace .table-foot small,.workspace .status{color:#000}
+
+/* Home search opens any company without depending on the progress table filters. */
+.company-search-field{position:relative}
+.company-search-results{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:30;background:#fff;border:1px solid #c9e3e6;border-radius:6px;box-shadow:0 8px 24px #203a5226;overflow:hidden}
+.company-search-results[hidden]{display:none}
+.company-search-summary{padding:10px 12px;background:#f1fbfb;border-bottom:1px solid #e0eeee;color:#3c626d;font-size:12px;line-height:1.6}
+.company-search-options{max-height:340px;overflow-y:auto;overscroll-behavior:contain}
+.company-search-field .company-search-option{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;padding:11px 14px;text-align:left;border:0;border-bottom:1px solid #edf2f4;border-radius:0;background:#fff;color:#17617d;white-space:normal;overflow-wrap:anywhere}
+.company-search-option:last-child{border-bottom:0}
+.company-search-option strong{font-size:14px;font-weight:500;line-height:1.5}
+.company-search-option small{font-size:12px;color:#647b86;line-height:1.5}
+.company-search-field .company-search-option:hover,.company-search-field .company-search-option:focus-visible,.company-search-field .company-search-option[aria-selected=true]{background:#eafafa;outline:0}
+.company-search-field .company-search-option:disabled{color:#87979e;background:#f7f9fa;cursor:not-allowed}
+@media print{.company-search-results{display:none!important}}
+
+/* Work progress: clickable status and scoped record details. */
+.progress-status-button{border:1px solid transparent;font:inherit;font-size:12px;cursor:pointer}.progress-status-button:hover,.progress-status-button:focus-visible{border-color:var(--cyan);text-decoration:underline}.progress-details-actions{margin-bottom:12px}.progress-details-table{max-height:45vh}.progress-details-table thead th{position:sticky;top:0}.progress-details-table td{max-width:230px;white-space:normal;overflow-wrap:anywhere}
+
+/* Contract reminders keep their own colors after the workspace's black text rule. */
+.agency-expiry{display:inline-flex;flex-direction:column;align-items:center;gap:4px;border:1px solid transparent;border-radius:5px;background:#f2f5f8;color:#17617d;padding:5px 9px;line-height:1.5;font:inherit}
+.agency-expiry small{font-size:11px;color:inherit}
+.agency-expiry:hover,.agency-expiry:focus-visible{border-color:var(--cyan);text-decoration:underline}
+.workspace .agency-expiry-due{color:#bc8d00;background:#fff8d6;font-weight:600}
+.workspace .agency-expiry-overdue{color:#c24c4c;background:#fff0f0}
+.workspace .agency-expiry-terminated{color:#687887;background:#f2f5f8}
+.agency-expiry-help strong{display:block;margin-top:4px}
+.contract-month-input{display:flex;gap:7px;align-items:stretch}
+.contract-month-input input{flex:1;min-width:0}
+.contract-month-input input:disabled{background:#f2f4f6;color:#71808c;cursor:not-allowed}
+.contract-month-picker{padding:10px;border:1px solid #c9e3e6;border-radius:5px;background:#f7fdfd}
+.contract-month-picker[hidden]{display:none}
+.contract-month-picker>label{display:flex;align-items:center;gap:8px}
+.contract-month-picker select{width:auto;flex:1}
+.contract-month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
+.contract-month-grid [aria-pressed=true]{background:var(--cyan);border-color:var(--cyan);color:#fff}

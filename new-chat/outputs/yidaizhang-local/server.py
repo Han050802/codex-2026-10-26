@@ -76,7 +76,7 @@ class ReconciliationJobs:
                 if timer: timer.cancel()
                 del self.jobs[key]
 
-    def start(self, payload, user_id, session):
+    def start(self, payload, user_id, session, complete=None):
         with self.lock:
             self._clean()
             if self.active:
@@ -104,6 +104,7 @@ class ReconciliationJobs:
             try:
                 import reconciliation
                 result=reconciliation.parse(payload, update)
+                if complete: result=complete(result)
                 with self.lock:
                     job['result']=result;job['status']='completed';job['finished']=time.monotonic()
             except ApiError as e:
@@ -112,7 +113,7 @@ class ReconciliationJobs:
             except Exception:
                 # Never log document data or exception messages from parsers.
                 with self.lock:
-                    job['error']='识别任务失败，请检查文件后重试';job['status']='failed';job['finished']=time.monotonic()
+                    job['error']='识别或原件归档失败，请检查文件及本机存储后重试';job['status']='failed';job['finished']=time.monotonic()
             finally:
                 def expire():
                     with self.lock:
@@ -126,13 +127,14 @@ class ReconciliationJobs:
         threading.Thread(target=run,daemon=True).start()
         return {'job_id':ident}
 
-    def parse_sync(self, payload):
+    def parse_sync(self, payload, complete=None):
         with self.lock:
             if self.active: raise ApiError(429,'已有识别任务正在进行，请等待完成后重试')
             self.active=True
         try:
             import reconciliation
-            return reconciliation.parse(payload)
+            result=reconciliation.parse(payload)
+            return complete(result) if complete else result
         finally:
             with self.lock: self.active=False
 
@@ -292,8 +294,8 @@ class Handler(BaseHTTPRequestHandler):
             conn=db.connect(self.app.db_path)
             if self.command in ('GET','HEAD'):return self.api(conn,path,query,{})
             self.origin_check();payload=self.request_payload()
-            # OCR and comparison do not write to the database; do not lock the
-            # entire workbench while a large document is being processed.
+            # OCR runs outside the write lock; completed source archiving takes
+            # a brief, separate lock and connection after parsing succeeds.
             if self.command=='POST' and path in ('/api/reconcile/parse','/api/reconcile/parse/start','/api/reconcile/match'):return self.api(conn,path,query,payload)
             with self.app.lock:return self.api(conn,path,query,payload)
         except ApiError as e:
@@ -384,8 +386,13 @@ class Handler(BaseHTTPRequestHandler):
         if path=='/api/upload' and method=='POST':return self.upload(conn,payload,user)
         if path.startswith('/api/reconcile/'):
             import reconciliation
-            if path=='/api/reconcile/parse' and method=='POST':return self.send(200,self.app.reconciliation_jobs.parse_sync(payload))
-            if path=='/api/reconcile/parse/start' and method=='POST':return self.send(200,self.app.reconciliation_jobs.start(payload,user['id'],csrf))
+            import source_archive
+            if path in ('/api/reconcile/parse','/api/reconcile/parse/start') and method=='POST':
+                payload=source_archive.prepare_payload(conn,payload)
+                complete=lambda result: source_archive.capture(self.app,payload,result,user)
+                result=(self.app.reconciliation_jobs.start(payload,user['id'],csrf,complete) if path.endswith('/start')
+                        else self.app.reconciliation_jobs.parse_sync(payload,complete))
+                return self.send(200,result)
             if path=='/api/reconcile/parse/progress' and method=='GET':return self.send(200,self.app.reconciliation_jobs.progress(query.get('job_id',''),user['id'],csrf))
             if path=='/api/reconcile/account-rules' and method=='GET':
                 import account_rules
@@ -396,10 +403,17 @@ class Handler(BaseHTTPRequestHandler):
                 if cid not in (None,''):
                     account_rules.list_rules(conn,'',cid)
                     cid=int(cid)
-                return self.send(200,reconciliation.match(payload.get('transactions',[]),payload.get('invoices',[]),payload.get('account_name',''),payload.get('account_needs_review',False),conn,cid))
+                result=reconciliation.match(payload.get('transactions',[]),payload.get('invoices',[]),payload.get('account_name',''),payload.get('account_needs_review',False),conn,cid)
+                result['receipt_matches']=reconciliation.match_receipts(payload.get('transactions',[]),payload.get('receipts',[]))
+                source_archive.validate(conn,cid,payload.get('archive_id'))
+                if payload.get('archive_id'): result['archive_id']=payload['archive_id']
+                return self.send(200,result)
             if path in ('/api/reconcile/batch-preview','/api/reconcile/batch-save') and method=='POST':
                 import reconciliation_batch
                 return self.send(200,reconciliation_batch.preview(conn,payload) if path.endswith('batch-preview') else reconciliation_batch.save_batch(conn,payload,user))
+            if path=='/api/reconcile/receipt-post' and method=='POST':
+                import reconciliation_batch
+                return self.send(200,reconciliation_batch.post_receipts(conn,payload,user))
             if path=='/api/reconcile/batch-auto' and method=='POST':
                 import reconciliation_batch
                 return self.send(200,reconciliation_batch.auto_post(conn,payload,user))
@@ -408,6 +422,19 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,reconciliation_batch.retry_saved(conn,payload.get('client_id'),user))
             if path=='/api/reconcile/save' and method=='POST':return self.send(200,reconciliation.save(conn,payload,user))
             if path=='/api/reconcile/records' and method=='GET':return self.send(200,reconciliation.records(conn,query.get('client_id')))
+            archive_file=re.fullmatch(r'/api/reconcile/archives/([A-Za-z0-9_-]+)/files/(\d+)',path)
+            if archive_file and method=='GET':
+                name,content=source_archive.download(conn,query.get('client_id'),archive_file[1],int(archive_file[2]))
+                ext=Path(name).suffix.lower()
+                inline=query.get('inline')=='1' and ext in ('.pdf','.png','.jpg','.jpeg','.webp')
+                ctype=mimetypes.guess_type(name)[0] if inline else 'application/octet-stream'
+                extra={'Content-Disposition':('inline' if inline else 'attachment')+"; filename*=UTF-8''"+urllib.parse.quote(name)}
+                if inline: extra['Content-Security-Policy']="sandbox; default-src 'none'; frame-ancestors 'self'"
+                return self.send(200,content,ctype or 'application/octet-stream',extra)
+            archive=re.fullmatch(r'/api/reconcile/archives/([A-Za-z0-9_-]+)',path)
+            if archive and method=='GET':return self.send(200,source_archive.sources(conn,query.get('client_id'),archive_id=archive[1]))
+            record_sources=re.fullmatch(r'/api/reconcile/records/(\d+)/sources',path)
+            if record_sources and method=='GET':return self.send(200,source_archive.sources(conn,query.get('client_id'),record_id=int(record_sources[1])))
             record_post=re.fullmatch(r'/api/reconcile/records/(\d+)/post',path)
             if record_post and method=='POST':return self.send(200,reconciliation.post_confirmed(conn,int(record_post[1]),payload,user))
             raise ApiError(404,'接口不存在')
@@ -429,6 +456,10 @@ class Handler(BaseHTTPRequestHandler):
         if match and method=='POST':return self.send(200,business.import_csv(conn,match.group(1),payload,user))
         if path.startswith('/api/books/'):
             import finance
+            voucher_sources=re.fullmatch(r'/api/books/(\d+)/vouchers/(\d+)/sources',path)
+            if voucher_sources and method=='GET':
+                import source_archive
+                return self.send(200,source_archive.sources(conn,int(voucher_sources[1]),voucher_id=int(voucher_sources[2])))
             result=finance.handle(conn,method,path,payload,user,query)
         else:result=business.handle(conn,method,path,payload,user,query,self.app.demo)
         if result is None:raise ApiError(404,'接口不存在')
@@ -462,6 +493,9 @@ class Handler(BaseHTTPRequestHandler):
     def download(self,conn,ident):
         row=conn.execute('SELECT * FROM files WHERE id=?',(ident,)).fetchone()
         if not row:raise ApiError(404,'附件不存在')
+        # Archive documents are available only through the scoped archive URL.
+        if conn.execute('SELECT 1 FROM source_archive_files WHERE file_id=?',(ident,)).fetchone():
+            raise ApiError(404,'请从当前账套的原件归档入口下载')
         target=(self.app.files_dir/row['path']).resolve()
         if target.parent!=self.app.files_dir or not target.is_file():raise ApiError(404,'附件文件缺失')
         return self.send(200,target.read_bytes(),'application/octet-stream',{'Content-Disposition':"attachment; filename*=UTF-8''"+urllib.parse.quote(row['name'])})

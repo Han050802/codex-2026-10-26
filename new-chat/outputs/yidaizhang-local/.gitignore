@@ -4,3 +4,28 @@ __pycache__/
 *.pyc
 *.log
 .pytest_cache/
+
+# Local credentials and runtime state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.pid
+*.lock
+setup-token.txt
+node_modules/
+
+# Ledgers, uploaded originals, generated reports and local snapshots
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.zip
+*.xlsx
+*.xls
+*.csv
+update-backups/
+balance-date-update-fixed/

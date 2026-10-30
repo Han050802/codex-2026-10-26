@@ -149,6 +149,8 @@ def init_schema(conn):
         conn.execute('ALTER TABLE vouchers ADD COLUMN attachment_count INTEGER NOT NULL DEFAULT 0 CHECK(attachment_count>=0 AND attachment_count<=9999)')
     if 'summary' not in {x[1] for x in conn.execute('PRAGMA table_info(voucher_lines)')}:
         conn.execute("ALTER TABLE voucher_lines ADD COLUMN summary TEXT NOT NULL DEFAULT ''")
+    if 'counterparty' not in {x[1] for x in conn.execute('PRAGMA table_info(vouchers)')}:
+        conn.execute("ALTER TABLE vouchers ADD COLUMN counterparty TEXT NOT NULL DEFAULT ''")
 
 
 def ensure_book(conn, client):
@@ -264,6 +266,15 @@ def _date(value):
     return value
 
 
+def _expense_date(invoice,transaction,saved=None):
+    """Prefer the document date; retain an explicit fallback for old records."""
+    for source,row in (('invoice',invoice),('transaction',transaction),('classification',saved)):
+        if not isinstance(row,dict): continue
+        try: return _date(row.get('date')),source
+        except ApiError: pass
+    return '', ''
+
+
 def _month_add(period,n):
     y,m=map(int,period.split('-')); z=y*12+m-1+n
     return f'{z//12:04d}-{z%12+1:02d}'
@@ -375,7 +386,7 @@ def _attachment_count(value):
     return value
 
 
-def _insert_voucher(conn,cid,date,summary,lines,user,source_type='manual',source_id=None,reviewed=False,attachment_count=0):
+def _insert_voucher(conn,cid,date,summary,lines,user,source_type='manual',source_id=None,reviewed=False,attachment_count=0,counterparty=''):
     _date(date); _open(conn,cid,date[:7]); summary=_text(summary,'摘要')
     lines=_lines(conn,cid,lines); attachment_count=_attachment_count(attachment_count)
     if source_id is not None:
@@ -384,8 +395,8 @@ def _insert_voucher(conn,cid,date,summary,lines,user,source_type='manual',source
             raise ApiError(409,'该业务已生成凭证',{'voucher_id':existing['id']})
     number=conn.execute('SELECT COALESCE(MAX(number),0)+1 FROM vouchers WHERE client_id=? AND period=?',(cid,date[:7])).fetchone()[0]
     uid=(user or {}).get('id')
-    cur=conn.execute('INSERT INTO vouchers(client_id,date,period,number,summary,source_type,source_id,reviewed,reviewed_by,reviewed_at,created_at,created_by,attachment_count) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        (cid,date,date[:7],number,summary,source_type,str(source_id) if source_id is not None else None,int(reviewed),uid if reviewed else None,now() if reviewed else None,now(),uid,attachment_count))
+    cur=conn.execute('INSERT INTO vouchers(client_id,date,period,number,summary,source_type,source_id,reviewed,reviewed_by,reviewed_at,created_at,created_by,attachment_count,counterparty) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        (cid,date,date[:7],number,summary,source_type,str(source_id) if source_id is not None else None,int(reviewed),uid if reviewed else None,now() if reviewed else None,now(),uid,attachment_count,str(counterparty or '').strip()[:200]))
     vid=cur.lastrowid
     conn.executemany('INSERT INTO voucher_lines(voucher_id,client_id,account_code,debit_fen,credit_fen,cashflow_category,summary) VALUES(?,?,?,?,?,?,?)',
         [(vid,cid,x['account_code'],x['debit_fen'],x['credit_fen'],x['cashflow_category'],x['summary'] or summary) for x in lines])
@@ -524,11 +535,119 @@ def withdraw_source(conn,cid,vid,user,reason,version):
         if not records: raise ApiError(409,'工资发放与凭证关联不一致')
         before=[dict(x) for x in records]
         conn.execute('UPDATE payroll SET payment_voucher_id=NULL,version=version+1 WHERE client_id=? AND period=? AND payment_voucher_id=?',(cid,sid,vid))
+    elif source=='bank_receipt':
+        # Receipt postings keep no source row; voiding frees the receipt for re-posting.
+        before={'receipt':sid}
     else:
         raise ApiError(409,'该来源不能在此撤回；手工凭证使用作废，损益结转使用反结账')
     conn.execute("UPDATE vouchers SET status='void',version=version+1 WHERE id=?",(vid,))
     audit(conn,user,'withdraw_source','voucher',vid,{'reason':reason,'source_type':source,'source_id':sid,'source_before':before,'voucher_before':row})
     return {'id':vid,'status':'void','source_type':source,'source_id':sid,'withdrawn':True,'version':row['version']+1}
+
+
+def _delete_reconciliation_record(conn,cid,rid,user,reason):
+    record=conn.execute('SELECT * FROM reconciliation_records WHERE client_id=? AND id=?',(cid,rid)).fetchone()
+    if not record: return
+    if conn.execute("SELECT 1 FROM vouchers WHERE client_id=? AND source_type='reconciliation' AND source_id=? AND status='active'",(cid,str(rid))).fetchone():
+        raise ApiError(409,'核对记录仍有有效凭证，请先删除凭证')
+    conn.execute('DELETE FROM reconciliation_records WHERE id=?',(rid,))
+    audit(conn,user,'delete','reconciliation_records',rid,{'reason':reason,'before':dict(record)})
+
+
+def delete_balance_entry(conn,cid,payload,user):
+    """Remove one wrongly saved balance-table entry; vouchers are voided, never erased."""
+    reason=_text(payload.get('reason'),'删除原因',500)
+    vid=payload.get('voucher_id'); rid=payload.get('record_id')
+    if type(vid) is int:
+        row=_voucher(conn,cid,vid); _open(conn,cid,row['period'])
+        if row['status']!='active': raise ApiError(409,'凭证已作废')
+        if row['reviewed']: raise ApiError(409,'已审核凭证须先取消审核')
+        source=row['source_type'] or 'manual'
+        if source=='closing': raise ApiError(409,'损益结转凭证请通过反结账撤销')
+        if source=='manual':
+            conn.execute("UPDATE vouchers SET status='void',version=version+1 WHERE id=?",(vid,))
+            audit(conn,user,'void','voucher',vid,{'before':row,'reason':reason})
+        else:
+            withdraw_source(conn,cid,vid,user,reason,row['version'])
+            if source=='reconciliation': _delete_reconciliation_record(conn,cid,int(row['source_id']),user,reason)
+        return {'voucher_id':vid,'status':'void'}
+    if type(rid) is int:
+        if not conn.execute('SELECT 1 FROM reconciliation_records WHERE client_id=? AND id=?',(cid,rid)).fetchone(): raise ApiError(404,'核对记录不存在')
+        _delete_reconciliation_record(conn,cid,rid,user,reason)
+        return {'record_id':rid,'status':'deleted'}
+    raise ApiError(400,'请指定要删除的凭证或核对记录')
+
+
+def _balance_delete_token(kind,row):
+    """Fingerprint a persisted source, never its derived balance presentation."""
+    if kind=='voucher':
+        source={'id':row['id'],'version':row['version']}
+    elif kind=='record':
+        source=dict(row)
+    else:
+        raise ValueError('Unknown balance deletion source')
+    canonical=json.dumps({'kind':kind,'source':source},ensure_ascii=False,sort_keys=True,separators=(',',':'))
+    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+
+def delete_balance_entries(conn,cid,payload,user):
+    """Delete selected source entries in the route's single write transaction."""
+    if not isinstance(payload,dict): raise ApiError(400,'批量删除数据格式错误')
+    reason=_text(payload.get('reason'),'删除原因',500)
+    entries=payload.get('entries')
+    if not isinstance(entries,list) or not 1<=len(entries)<=5000:
+        raise ApiError(400,'请选择1至5000条数据进行删除')
+    voucher_tokens={}; record_tokens={}
+    changed='所选数据已变化，请刷新余额表后重新选择；本次未删除任何数据'
+    for entry in entries:
+        if not isinstance(entry,dict) or set(entry) not in ({'voucher_id','delete_token'},{'record_id','delete_token'}):
+            raise ApiError(400,'每条删除数据须指定凭证或核对记录及删除校验标记，请刷新余额表')
+        key='voucher_id' if 'voucher_id' in entry else 'record_id'; value=entry[key]
+        if type(value) is not int or not 0<value<=9223372036854775807:
+            raise ApiError(400,'删除数据编号须为有效正整数')
+        token=entry['delete_token']
+        if not isinstance(token,str) or not re.fullmatch(r'[0-9a-f]{64}',token):
+            raise ApiError(400,'删除校验标记无效，请刷新余额表')
+        tokens=voucher_tokens if key=='voucher_id' else record_tokens
+        if value in tokens and tokens[value]!=token: raise ApiError(409,changed)
+        tokens[value]=token
+    voucher_ids=set(voucher_tokens); record_ids=set(record_tokens)
+
+    # Validate every selected voucher before changing anything. The transaction
+    # also rolls back later source-dependency failures and their audit writes.
+    linked_records=set()
+    for vid in sorted(voucher_ids):
+        row=_voucher(conn,cid,vid)
+        if voucher_tokens[vid]!=_balance_delete_token('voucher',row): raise ApiError(409,changed)
+        _open(conn,cid,row['period'])
+        if row['status']!='active': raise ApiError(409,'凭证已作废')
+        if row['reviewed']: raise ApiError(409,'已审核凭证须先取消审核')
+        if row['source_type']=='closing': raise ApiError(409,'损益结转凭证请通过反结账撤销')
+        if row['source_type']=='reconciliation':
+            try: linked_records.add(int(row['source_id']))
+            except (TypeError,ValueError): raise ApiError(409,'核对记录与凭证关联不一致，不能删除')
+    for rid in sorted(record_ids):
+        record=conn.execute('SELECT * FROM reconciliation_records WHERE client_id=? AND id=?',(cid,rid)).fetchone()
+        if not record: raise ApiError(404,'核对记录不存在')
+        if record_tokens[rid]!=_balance_delete_token('record',record): raise ApiError(409,changed)
+        # One selected voucher already removes its linked reconciliation row.
+        if rid in linked_records: continue
+        if conn.execute("SELECT 1 FROM vouchers WHERE client_id=? AND source_type='reconciliation' AND source_id=? AND status='active'",(cid,str(rid))).fetchone():
+            raise ApiError(409,'核对记录仍有有效凭证，请同时选择对应凭证')
+        metadata=_balance_object(record['batch_metadata_json'])
+        date,_=_expense_date(_balance_object(record['invoice_json']),_balance_object(record['transaction_json']),metadata.get('expense_classification'))
+        if not date: raise ApiError(409,'核对记录日期缺失，不能批量删除，请先核对原始记录')
+        _open(conn,cid,date[:7])
+
+    results=[]
+    # Newest postings first respects inventory, payroll and asset dependencies.
+    # A dependency outside the selection still rejects the entire transaction.
+    for vid in sorted(voucher_ids,reverse=True):
+        results.append(delete_balance_entry(conn,cid,{'voucher_id':vid,'reason':reason},user))
+    for rid in sorted(record_ids-linked_records):
+        results.append(delete_balance_entry(conn,cid,{'record_id':rid,'reason':reason},user))
+    return {'deleted_count':len(results),'voucher_count':len(voucher_ids),
+            'record_count':len(record_ids-linked_records),'requested_count':len(entries),'results':results}
 
 
 def _trial(conn,cid,period):
@@ -582,41 +701,391 @@ def _ledger(conn,cid,start,end,trial):
     return result
 
 
+def _balance_object(value):
+    try:
+        result=json.loads(value or '{}')
+        return result if isinstance(result,dict) else {}
+    except (ValueError,TypeError): return {}
+
+
+def _balance_text(value):
+    return value.strip() if isinstance(value,str) else ''
+
+
+def _balance_contribution(date,start,end,debit,credit,initial=False):
+    """Amounts contributed by one item, not a running account balance.
+
+    Opening/closing contributions reconcile to account totals after netting
+    debit and credit. Keep individual opposite-side payments visible even when
+    their account's ending balance is zero.
+    """
+    before=initial or date[:7]<start
+    net=debit-credit
+    opening=net if before else 0
+    ytd=not initial and end[:4]+'-01'<=date[:7]<=end
+    return {'period_bucket':'opening' if before else 'current',
+            'opening_debit_fen':max(opening,0),'opening_credit_fen':max(-opening,0),
+            'debit_fen':0 if before else debit,'credit_fen':0 if before else credit,
+            'closing_debit_fen':max(net,0),'closing_credit_fen':max(-net,0),
+            'ytd_debit_fen':debit if ytd else 0,'ytd_credit_fen':credit if ytd else 0}
+
+
+def _balance_classifications(conn,cid,start,end,accounts):
+    classified=[]
+    for row in conn.execute("""SELECT r.*
+        FROM reconciliation_records r WHERE r.client_id=? AND r.status IN ('matched','reviewed') AND NOT EXISTS
+        (SELECT 1 FROM vouchers v WHERE v.client_id=r.client_id AND v.source_type='reconciliation'
+         AND v.source_id=CAST(r.id AS TEXT) AND v.status='active')""",(cid,)):
+        entry=_balance_object(row['batch_metadata_json']).get('expense_classification')
+        if (not isinstance(entry,dict) or entry.get('direction')!='expense' or
+            not isinstance(entry.get('account_code'),str) or entry['account_code'] not in accounts or
+            type(entry.get('amount_fen')) is not int or entry['amount_fen']<=0): continue
+        transaction=_balance_object(row['transaction_json']); invoice=_balance_object(row['invoice_json'])
+        date,date_source=_expense_date(invoice,transaction,entry)
+        if not date or date[:7]>end: continue
+        counterparty=_balance_text(transaction.get('counterparty'))
+        summary=(_balance_text(transaction.get('note')) or _balance_text(entry.get('summary')) or
+                 _balance_text(invoice.get('item_name')) or ('付款 '+counterparty).strip())
+        classified.append({**entry,'account_name':accounts[entry['account_code']]['account_name'],
+            'record_id':row['id'],'status':'expense_classified','counterparty':counterparty,
+            'date':date,'date_source':date_source,'summary':summary,
+            'invoice_number':row['invoice_number'],'source':_balance_text(entry.get('source')) or 'invoice_and_list',
+            'source_type':'expense_classification','source_id':str(row['id']),
+            'source_label':'发票支出','reference':'发票 '+row['invoice_number'],
+            'delete_token':_balance_delete_token('record',row),
+            **_balance_contribution(date,start,end,entry['amount_fen'],0)})
+    return sorted(classified,key=lambda x:(x['date'],x['record_id']))
+
+
+def _balance_details(conn,cid,client,start,end,classified):
+    details=[]
+    for row in conn.execute("""SELECT o.*,a.name account_name FROM opening_balances o
+        JOIN accounts a ON a.client_id=o.client_id AND a.code=o.account_code
+        WHERE o.client_id=? AND (o.debit_fen<>0 OR o.credit_fen<>0) ORDER BY o.account_code""",(cid,)):
+        date=client['start_period']+'-01'
+        details.append({'account_code':row['account_code'],'account_name':row['account_name'],
+            'date':date,'date_source':'opening_balance','summary':'建账期初余额','counterparty':'','invoice_number':'',
+            'amount_fen':abs(row['debit_fen']-row['credit_fen']),
+            'source':'opening_balance','source_type':'opening_balance','source_id':row['account_code'],
+            'source_label':'建账期初','reference':'建账期初','voucher_id':None,'line_id':None,'record_id':None,
+            **_balance_contribution(date,start,end,row['debit_fen'],row['credit_fen'],initial=True)})
+    for row in conn.execute("""SELECT l.id line_id,l.voucher_id,l.account_code,l.debit_fen,l.credit_fen,
+        l.summary line_summary,a.name account_name,v.date,v.number,v.period,v.summary voucher_summary,
+        v.source_type,v.source_id,v.reviewed,v.version voucher_version,v.counterparty voucher_counterparty,r.id record_id,r.transaction_json,r.invoice_number
+        FROM voucher_lines l JOIN vouchers v ON v.id=l.voucher_id
+        JOIN accounts a ON a.client_id=l.client_id AND a.code=l.account_code
+        LEFT JOIN reconciliation_records r ON v.source_type='reconciliation'
+            AND r.client_id=v.client_id AND CAST(r.id AS TEXT)=v.source_id
+        WHERE v.client_id=? AND v.status='active' AND v.period<=?
+        ORDER BY v.date,v.number,l.id""",(cid,end)):
+        transaction=_balance_object(row['transaction_json'])
+        details.append({'account_code':row['account_code'],'account_name':row['account_name'],
+            'date':row['date'],'date_source':'voucher','summary':row['line_summary'] or row['voucher_summary'],
+            'counterparty':_balance_text(transaction.get('counterparty')) or _balance_text(row['voucher_counterparty']),'invoice_number':row['invoice_number'] or '',
+            'amount_fen':max(row['debit_fen'],row['credit_fen']),
+            'source':row['source_type'],'source_type':row['source_type'],'source_id':row['source_id'],
+            'source_label':'会计凭证','reference':f"记 {row['period']}-{row['number']:04d}",
+            'voucher_id':row['voucher_id'],'line_id':row['line_id'],'record_id':row['record_id'],'reviewed':bool(row['reviewed']),
+            'delete_token':_balance_delete_token('voucher',{'id':row['voucher_id'],'version':row['voucher_version']}),
+            **_balance_contribution(row['date'],start,end,row['debit_fen'],row['credit_fen'])})
+    details.extend(dict(row,voucher_id=None,line_id=None) for row in classified)
+    return sorted(details,key=lambda x:(x['account_code'],x['date'],x['voucher_id'] or 0,x['line_id'] or 0,x['record_id'] or 0))
+
+
+_BALANCE_AMOUNT_KEYS=('opening_debit_fen','opening_credit_fen','debit_fen','credit_fen',
+                      'closing_debit_fen','closing_credit_fen','ytd_debit_fen','ytd_credit_fen')
+
+
+def _balance_book_end(conn,cid,client,accounts):
+    """Use real report sources, rather than today's or the selected month."""
+    posted=conn.execute("SELECT MAX(period) FROM vouchers WHERE client_id=? AND status='active'",(cid,)).fetchone()[0]
+    classified=_balance_classifications(conn,cid,client['start_period'],'9999-12',accounts)
+    return max([client['start_period'],posted or client['start_period']]+[row['date'][:7] for row in classified])
+
+
+def _balance_category_key(entry):
+    # A category describes the same counterparty and business purpose, not an
+    # individual receipt, amount or date. Whitespace must not split a company.
+    def normalized(value): return re.sub(r'\s+','',_balance_text(value)).casefold()
+    return (normalized(entry.get('counterparty')),normalized(entry.get('summary')) or normalized(entry.get('account_name')))
+
+
+def _balance_category_totals(entries):
+    result={key:sum(row.get(key,0) for row in entries) for key in _BALANCE_AMOUNT_KEYS}
+    # Debit and credit activity stay gross; balances are the net of the
+    # category, exactly like the actual parent account's balances.
+    for prefix in ('opening','closing'):
+        net=result[prefix+'_debit_fen']-result[prefix+'_credit_fen']
+        result[prefix+'_debit_fen']=max(net,0); result[prefix+'_credit_fen']=max(-net,0)
+    return result
+
+
+def _balance_categories(trial,details,all_details):
+    """Read-only numbered reporting categories, with real ledger references.
+
+    Build the registry from the entire book so changing a report period or
+    filter cannot renumber a category. Original account totals remain the
+    authoritative rollups; generated children never feed those totals twice.
+    """
+    accounts={row['account_code']:row for row in trial}
+    occupied=set(accounts)
+    registry={}; groups={}
+    for entry in all_details:
+        code=entry['account_code']
+        if code not in accounts: continue
+        key=_balance_category_key(entry)
+        groups.setdefault(code,{})
+        if key not in groups[code]: groups[code][key]=entry
+    category_rows=[]; redirected=False
+
+    def make_row(code,parent,name,original,level,is_leaf=True):
+        source=accounts[original]
+        return {'account_code':code,'code':code,'account_name':name,'name':name,
+                'parent_code':parent,'level':level,'is_leaf':is_leaf,'is_category':True,
+                'original_account_code':original,'source_account_codes':[original],
+                'category':source['category'],'direction':source['direction'],'report_key':source['report_key'],
+                'source_refs':[],**{key:0 for key in _BALANCE_AMOUNT_KEYS}}
+
+    def allocate(parent,level,original,items):
+        nonlocal redirected
+        # Each additional level has exactly two digits. Real account children
+        # and their prefixes are reserved, including customized account trees.
+        available=[parent+f'{i:02d}' for i in range(1,100)
+                   if not any(code==parent+f'{i:02d}' or code.startswith(parent+f'{i:02d}') for code in occupied)]
+        if not available and not any(code.startswith(parent+'00') for code in occupied):
+            # 00 is reserved for overflow only when every conventional child
+            # slot already belongs to a real account.
+            branch=parent+'00'
+            category_rows.append(make_row(branch,parent,'分类明细',original,level,False)); occupied.add(branch)
+            allocate(branch,level+1,original,items)
+            return
+        if not available:
+            # All 99 actual child slots are occupied. Place reporting details
+            # under a numbered reporting branch below the last actual child;
+            # that child is already represented in the account hierarchy.
+            branch=parent+'99'
+            branch_level=accounts.get(branch,{}).get('level',level)
+            if branch not in accounts:
+                category_rows.append(make_row(branch,parent,'分类明细',original,level,False))
+            redirected=True
+            allocate(branch,branch_level+1,original,items)
+            return
+        count=len(items)
+        direct=count if count<=len(available) else max(0,len(available)-1)
+        for code,(key,entry) in zip(available,items[:direct]):
+            counterparty=_balance_text(entry.get('counterparty')); purpose=_balance_text(entry.get('summary'))
+            name=(counterparty+'（'+purpose+'）' if counterparty and purpose and counterparty!=purpose
+                  else counterparty or purpose or entry.get('account_name') or '其他明细')
+            row=make_row(code,parent,name,original,level)
+            category_rows.append(row); occupied.add(code); registry[(original,key)]=row
+        if direct<count:
+            branch=available[-1]
+            category_rows.append(make_row(branch,parent,'更多明细',original,level,False)); occupied.add(branch)
+            allocate(branch,level+1,original,items[direct:])
+
+    for code,items in groups.items():
+        allocate(code,accounts[code]['level']+1,code,list(items.items()))
+    categorized=[]; entries_by_code={}
+    for entry in details:
+        category=registry.get((entry['account_code'],_balance_category_key(entry)))
+        if not category: continue
+        row=dict(entry,original_account_code=entry['account_code'],category_code=category['account_code'],
+                 category_name=category['account_name'],category_level=category['level'])
+        categorized.append(row); entries_by_code.setdefault(category['account_code'],[]).append(row)
+    for row in category_rows:
+        entries=[entry for code,values in entries_by_code.items() if code.startswith(row['account_code']) for entry in values]
+        row.update(_balance_category_totals(entries))
+        row['source_refs']=[{key:entry.get(key) for key in ('original_account_code','source_type','source_id','voucher_id','line_id','record_id')}
+                            for entry in entries]
+    originals=[]
+    for source in _trial_rollup(trial):
+        code=source['account_code']
+        if redirected:
+            # A completely occupied 00-99 range needs an existing display
+            # branch. Recompute that display hierarchy from allocated sources;
+            # the unchanged trial_balance still holds actual ledger totals.
+            source=dict(source,**_balance_category_totals([entry for entry in categorized if entry['category_code'].startswith(code)]))
+        originals.append(dict(source,code=code,name=source['account_name'],is_category=False,
+                              original_account_code=code,source_account_codes=[code],
+                              is_leaf=source['is_leaf'] and not any(row['parent_code']==code for row in category_rows)))
+    return sorted(originals+category_rows,key=lambda row:row['account_code']),categorized
+
+
 def balance_bundle(conn,cid,start,end):
     client=_client(conn,cid); start=_period(start); end=_period(end)
     if end<start: raise ApiError(400,'结束期间不能早于开始期间')
     if start<client['start_period']: raise ApiError(400,'查询期间不能早于建账月份')
-    trial=_trial_range(conn,cid,start,end)
-    classified=[]
-    for row in conn.execute("""SELECT r.id,r.batch_metadata_json,r.transaction_json FROM reconciliation_records r
-        WHERE r.client_id=? AND r.status IN ('matched','reviewed') AND NOT EXISTS
-        (SELECT 1 FROM vouchers v WHERE v.client_id=r.client_id AND v.source_type='reconciliation'
-         AND v.source_id=CAST(r.id AS TEXT) AND v.status='active')""",(cid,)):
-        try:
-            entry=json.loads(row['batch_metadata_json'] or '{}').get('expense_classification')
-            if (not isinstance(entry,dict) or entry.get('direction')!='expense' or
-                not isinstance(entry.get('date'),str) or not start<=entry['date'][:7]<=end or
-                not isinstance(entry.get('account_code'),str) or not entry['account_code'] or
-                type(entry.get('amount_fen')) is not int or entry['amount_fen']<=0): continue
-            # The saved transaction is the source of the other party's name.  Old
-            # records may have missing or invalid transaction data; keep their
-            # classification visible without guessing from the account or invoice.
-            try:
-                transaction=json.loads(row['transaction_json'] or '{}')
-                counterparty=transaction.get('counterparty') if isinstance(transaction,dict) else ''
-                counterparty=counterparty.strip() if isinstance(counterparty,str) else ''
-            except (ValueError,TypeError):
-                counterparty=''
-            classified.append({**entry,'record_id':row['id'],'status':'expense_classified','counterparty':counterparty})
-        except (ValueError,TypeError,AttributeError): continue
-    classified.sort(key=lambda x:(x['date'],x['record_id']))
-    keys=('opening_debit_fen','opening_credit_fen','debit_fen','credit_fen','closing_debit_fen','closing_credit_fen','ytd_debit_fen','ytd_credit_fen')
-    return {'start_period':start,'end_period':end,'trial_balance':trial,'trial_balance_rollup':_trial_rollup(trial),'expense_classifications':classified,
-            'ledger':_ledger(conn,cid,start,end,trial),'totals':{key:sum(r[key] for r in trial) for key in keys}}
+    formal_trial=_trial_range(conn,cid,start,end)
+    trial=[dict(row) for row in formal_trial]; accounts={row['account_code']:row for row in trial}
+    classified=_balance_classifications(conn,cid,start,end,accounts)
+    # This report incorporates documented expense classifications without
+    # inventing a funding account, a journal entry, or changing formal reports.
+    for entry in classified:
+        row=accounts[entry['account_code']]
+        begin=row['opening_debit_fen']-row['opening_credit_fen']+entry['opening_debit_fen']
+        finish=row['closing_debit_fen']-row['closing_credit_fen']+entry['amount_fen']
+        row.update(opening_debit_fen=max(begin,0),opening_credit_fen=max(-begin,0),
+                   closing_debit_fen=max(finish,0),closing_credit_fen=max(-finish,0))
+        row['debit_fen']+=entry['debit_fen']; row['ytd_debit_fen']+=entry['ytd_debit_fen']
+    details=_balance_details(conn,cid,client,start,end,classified)
+    book_end=_balance_book_end(conn,cid,client,accounts)
+    all_classified=_balance_classifications(conn,cid,client['start_period'],book_end,accounts)
+    all_details=_balance_details(conn,cid,client,client['start_period'],book_end,all_classified)
+    category_rows,details=_balance_categories(trial,details,all_details)
+    source_accounts=[dict(row) for row in conn.execute('SELECT * FROM accounts WHERE client_id=? ORDER BY code',(cid,))]
+    return {'start_period':start,'end_period':end,'report_basis':'vouchers_and_invoice_classifications',
+            'trial_balance':trial,'trial_balance_rollup':_trial_rollup(trial),'expense_classifications':classified,
+            'balance_details':details,'category_rows':category_rows,'balance_categories':category_rows,
+            'category_accounts':[{key:value for key,value in row.items() if key not in _BALANCE_AMOUNT_KEYS and key!='source_refs'} for row in category_rows],
+            'source_accounts':source_accounts,'book_start_period':client['start_period'],'book_end_period':book_end,
+            'ledger':_ledger(conn,cid,start,end,formal_trial),'totals':{key:sum(r[key] for r in trial) for key in _BALANCE_AMOUNT_KEYS}}
+
+
+def standard_balance_bundle(conn,cid,start,end):
+    """Read-only, source-linked presentation after monthly profit/loss closing.
+
+    Actual journals and period/review status never change. Finance-income
+    credits on real business lines are shown as negative finance debits.
+    Canonical monthly closes reuse actual closing lines before projecting only
+    their missing amounts; December also transfers annual profit to retained
+    earnings. Replaying the full history makes range openings and YTD coherent.
+    """
+    result=balance_bundle(conn,cid,start,end)
+    client=_client(conn,cid); horizon=max(end,result['book_end_period'])
+    metadata={row['account_code']:dict(row) for row in result['trial_balance']}
+    actual=_balance_details(conn,cid,client,client['start_period'],horizon,[])
+    profit='3103' if client['standard']=='small2013' else '4103'
+    retained='3104' if client['standard']=='small2013' else '4104'
+    balances={code:0 for code in metadata}; groups={}; templates={}
+    by_month={}; closing_pool={}; actual_closing=[]; normalized=[]; canonical=[]
+
+    def source_ref(entry):
+        return {key:entry.get(key) for key in ('source_type','source_id','voucher_id','line_id','record_id')}
+
+    def remember(entry,debit,credit):
+        code=entry['account_code']; key=_balance_category_key(entry)
+        balances[code]+=debit-credit
+        groups.setdefault(code,{})[key]=groups.get(code,{}).get(key,0)+debit-credit
+        templates.setdefault((code,key),entry)
+
+    displayed=[]
+    for original in actual:
+        entry=dict(original); code=entry['account_code']; initial=entry['source_type']=='opening_balance'
+        debit=entry['opening_debit_fen'] if initial else entry['debit_fen']
+        credit=entry['opening_credit_fen'] if initial else entry['credit_fen']
+        if entry['source_type']=='closing':
+            entry.update(original_debit_fen=debit,original_credit_fen=credit,remaining_fen=debit or credit)
+            closing_pool.setdefault((entry['date'][:7],code,'debit' if debit else 'credit'),[]).append(entry)
+            actual_closing.append(entry)
+            continue
+        entry.update(original_debit_fen=debit,original_credit_fen=credit,
+                     report_debit_fen=debit,report_credit_fen=credit,is_projection=False,read_only=True)
+        if (not initial and metadata[code]['category']=='expense' and
+                metadata[code]['report_key']=='finance' and credit):
+            entry.update(report_debit_fen=debit-credit,report_credit_fen=0,
+                         report_adjustment='finance_income_credit_as_negative_debit')
+            normalized.append(dict(source_ref(entry),account_code=code,amount_fen=credit))
+        displayed.append(entry)
+        if initial: remember(entry,debit,credit)
+        else: by_month.setdefault(entry['date'][:7],[]).append(entry)
+
+    def closing_line(period,phase,code,debit,credit,related_codes):
+        if code not in metadata: raise ApiError(409,'标准结转口径缺少科目 '+code)
+        amount=debit or credit; side='debit' if debit else 'credit'; effect=1 if debit else -1
+        candidates=[(key,net) for key,net in groups.get(code,{}).items() if net*effect<0]
+        allocations=[]; remaining=amount
+        for key,net in candidates:
+            take=min(remaining,abs(net)); allocations.append((templates[(code,key)],key,take))
+            remaining-=take
+            if not remaining: break
+        if remaining:
+            template={'counterparty':'','summary':'年度利润结转' if phase=='annual' else '损益结转'}
+            allocations.append((template,_balance_category_key(template),remaining))
+        related=[source_ref(item) for item in actual if item['account_code'] in related_codes and item['date'][:7]<=period]
+        related.extend(ref for item in canonical if item['account_code'] in related_codes and item['date'][:7]<=period
+                       for ref in item.get('related_source_refs',[]))
+        related=list({json.dumps(ref,sort_keys=True):ref for ref in related}.values())
+        for template,key,allocation in allocations:
+            remaining=allocation
+            while remaining:
+                pool=closing_pool.get((period,code,side),[])
+                real=next((item for item in pool if item['remaining_fen']),None)
+                take=min(remaining,real['remaining_fen']) if real else remaining
+                category_id=hashlib.sha256(json.dumps(key,ensure_ascii=False).encode()).hexdigest()[:16]
+                entry={'account_code':code,'account_name':metadata[code]['account_name'],
+                       'date':_last_date(period),'date_source':'report_closing','period':period,
+                       'summary':template['summary'],'counterparty':template.get('counterparty',''),'invoice_number':'',
+                       'amount_fen':take,'report_debit_fen':take if debit else 0,'report_credit_fen':take if credit else 0,
+                       'source':'report_closing','source_type':'report_closing',
+                       'source_id':f'standard:{cid}:{period}:{phase}:{code}:{category_id}',
+                       'source_label':'报表损益结转测算','reference':'报表测算 '+period,
+                       'voucher_id':None,'line_id':None,'record_id':None,'is_projection':True,'read_only':True,
+                       'projection_phase':phase,'related_source_refs':related}
+                if real:
+                    entry.update({field:real.get(field) for field in ('source','source_type','source_id','voucher_id','line_id','record_id','reference','reviewed')})
+                    entry.update(source_label='实际损益结转凭证',date_source='voucher',is_projection=False,
+                                 original_debit_fen=real['original_debit_fen'],original_credit_fen=real['original_credit_fen'])
+                    real['remaining_fen']-=take
+                displayed.append(entry); canonical.append(entry)
+                remember(entry,entry['report_debit_fen'],entry['report_credit_fen'])
+                remaining-=take
+
+    period=client['start_period']
+    while period<=horizon:
+        for entry in by_month.get(period,[]): remember(entry,entry['original_debit_fen'],entry['original_credit_fen'])
+        pending=[]
+        for code,row in metadata.items():
+            if row['category'] not in ('income','expense') or not balances[code]: continue
+            value=balances[code]
+            pending.append((code,max(-value,0),max(value,0)))
+        diff=sum(debit-credit for _,debit,credit in pending)
+        profit_codes=[code for code,_,_ in pending]
+        for code,debit,credit in pending: closing_line(period,'monthly',code,debit,credit,[code])
+        if diff: closing_line(period,'monthly',profit,max(-diff,0),max(diff,0),profit_codes)
+        if period.endswith('-12') and balances.get(profit,0):
+            value=balances[profit]
+            closing_line(period,'annual',profit,max(-value,0),max(value,0),[profit]+profit_codes)
+            closing_line(period,'annual',retained,max(value,0),max(-value,0),[profit]+profit_codes)
+        if period==horizon: break
+        period=_month_add(period,1)
+
+    def contribution(entry,range_start,range_end):
+        initial=entry['source_type']=='opening_balance'
+        return dict(entry,**_balance_contribution(entry['date'],range_start,range_end,
+                    entry['report_debit_fen'],entry['report_credit_fen'],initial=initial))
+
+    all_details=[contribution(entry,client['start_period'],horizon) for entry in displayed]
+    details=[contribution(entry,start,end) for entry in displayed if entry['date'][:7]<=end]
+    trial=[]
+    for code,row in metadata.items():
+        amounts=_balance_category_totals([entry for entry in details if entry['account_code']==code])
+        trial.append(dict(row,**amounts))
+    category_rows,details=_balance_categories(trial,details,all_details)
+    projected=[entry for entry in canonical if entry['is_projection'] and entry['date'][:7]<=end]
+    normalized=[entry for entry in normalized if any(item['line_id']==entry['line_id'] and item['date'][:7]<=end for item in actual)]
+    closing_adjustments=[dict(source_ref(entry),account_code=entry['account_code'],unrepresented_amount_fen=entry['remaining_fen'])
+                         for entry in actual_closing if entry['remaining_fen'] and entry['date'][:7]<=end]
+    if closing_adjustments:
+        raise ApiError(409,'实际损益结转分录与标准逐月口径不一致，请先核对原凭证；可切换实际发生额查看。',closing_adjustments)
+    source_accounts=result['source_accounts']
+    result.update(basis='standard',report_basis='standard_after_profit_loss_closing',report_title='余额表（损益结转口径）',
+                  has_projection=bool(projected),projection_note='仅报表测算损益结转；未生成会计凭证、未审核凭证、未改变结账状态。' if projected else '当前范围无待测算损益；未新增会计凭证或改变结账状态。',
+                  trial_balance=trial,trial_balance_rollup=_trial_rollup(trial),balance_details=details,
+                  category_rows=category_rows,balance_categories=category_rows,
+                  category_accounts=[{key:value for key,value in row.items() if key not in _BALANCE_AMOUNT_KEYS and key!='source_refs'} for row in category_rows],
+                  projection_entries=[contribution(entry,start,end) for entry in projected],
+                  normalized_source_refs=normalized,closing_presentation_adjustments=closing_adjustments,
+                  unposted_expense_classifications=result['expense_classifications'],expense_classifications=[],
+                  source_accounts=source_accounts,totals={key:sum(row[key] for row in trial) for key in _BALANCE_AMOUNT_KEYS})
+    return result
 
 
 def _dashboard(conn,cid,period,trial):
-    vouchers=conn.execute("SELECT COUNT(*) count,COALESCE(SUM(attachment_count),0) attachment_count FROM vouchers WHERE client_id=? AND period=? AND status='active'",(cid,period)).fetchone()
+    voucher_periods=[dict(row) for row in conn.execute("SELECT period,COUNT(*) voucher_count,COALESCE(SUM(attachment_count),0) attachment_count FROM vouchers WHERE client_id=? AND status='active' GROUP BY period ORDER BY period DESC",(cid,))]
+    vouchers=next((row for row in voucher_periods if row['period']==period),{'voucher_count':0,'attachment_count':0})
+    voucher_history={'voucher_count':sum(row['voucher_count'] for row in voucher_periods),
+                     'attachment_count':sum(row['attachment_count'] for row in voucher_periods),
+                     'periods':voucher_periods}
     invoices={kind:{'count':0,'total_fen':0,'tax_fen':0} for kind in ('input','output','expense')}
     for row in conn.execute('SELECT kind,COUNT(*) count,SUM(total_fen) total_fen,SUM(tax_fen) tax_fen FROM invoices WHERE client_id=? AND period=? GROUP BY kind',(cid,period)):
         if row['kind'] in invoices: invoices[row['kind']]={key:row[key] for key in ('count','total_fen','tax_fen')}
@@ -626,7 +1095,7 @@ def _dashboard(conn,cid,period,trial):
     funds={'bank_fen':net('1002'),'cash_fen':net('1001'),'receivable_fen':net('1122'),'payable_fen':net('2202',True)}
     for prefix,key in (('1122','receivable_account_count'),('2202','payable_account_count')):
         funds[key]=sum(1 for r in trial if r['account_code'].startswith(prefix) and len(r['account_code'])>len(prefix) and r['is_leaf'] and (r['closing_debit_fen'] or r['closing_credit_fen']))
-    return {'voucher_count':vouchers['count'],'attachment_count':vouchers['attachment_count'],'invoices':invoices,
+    return {'voucher_count':vouchers['voucher_count'],'attachment_count':vouchers['attachment_count'],'voucher_history':voucher_history,'invoices':invoices,
             'funds':funds,'tax_payable_fen':net('2221',True)}
 
 
@@ -1106,12 +1575,22 @@ def handle(conn,method,path,payload,user,query):
     match=re.fullmatch(r'/api/books/(\d+)(?:/(.*))?',path)
     if not match: return None
     cid=int(match[1]); route=match[2] or ''; payload=payload or {}; query=query or {}; _client(conn,cid)
-    if method=='GET' and route=='balance':
-        end=_period(query.get('end',query.get('period',dt.date.today().isoformat()[:7])))
-        start=_period(query.get('start',end))
+    if method=='GET' and route in ('balance','balance-total'):
+        all_book=route=='balance-total' or query.get('scope')=='all'
+        basis=query.get('basis','raw')
+        if basis not in ('raw','actual','standard'): raise ApiError(400,'余额表口径无效')
         with conn:
             if not conn.in_transaction: conn.execute('BEGIN')
-            return balance_bundle(conn,cid,start,end)
+            if all_book:
+                client=_client(conn,cid)
+                accounts={row['code']:{'account_name':row['name']} for row in conn.execute('SELECT * FROM accounts WHERE client_id=?',(cid,))}
+                start=client['start_period']; end=_balance_book_end(conn,cid,client,accounts)
+            else:
+                end=_period(query.get('end',query.get('period',dt.date.today().isoformat()[:7])))
+                start=_period(query.get('start',end))
+            result=(standard_balance_bundle if basis=='standard' else balance_bundle)(conn,cid,start,end)
+            result.update(scope='all' if all_book else 'range',all_book=all_book,basis=basis)
+            return result
     if method=='GET' and not route:
         p=_period(query.get('period',dt.date.today().isoformat()[:7]))
         # One read transaction prevents a report composed from different commits.
@@ -1166,6 +1645,8 @@ def handle(conn,method,path,payload,user,query):
                     return _voucher(conn,cid,vid)
                 if method=='DELETE':
                     conn.execute("UPDATE vouchers SET status='void',version=version+1 WHERE id=?",(vid,)); audit(conn,user,'void','voucher',vid,{'before':row,'reason':payload.get('reason','')}); return _voucher(conn,cid,vid)
+            if method=='POST' and route=='balance-entries/delete': return delete_balance_entry(conn,cid,payload,user)
+            if method=='POST' and route=='balance-entries/delete-batch': return delete_balance_entries(conn,cid,payload,user)
             if method=='POST' and route=='close': return _close(conn,cid,payload,user)
             if method=='POST' and route=='reopen': return _reopen(conn,cid,payload,user)
             if method=='POST' and route=='assets': return _asset_create(conn,cid,payload,user)

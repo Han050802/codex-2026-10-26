@@ -1,3 +1,4 @@
+"""All company, person and monetary fixtures below are synthetic."""
 import unittest
 import reconciliation, reconciliation_rules
 
@@ -30,5 +31,21 @@ class GptRulesTests(unittest.TestCase):
         self.assertIsNone(out[0]['account_code']); self.assertIsNone(out[1]['account_code'])
         self.assertEqual(out[2]['account_code'],'1601')
         self.assertIn('单价',out[2]['review'])
+    def test_counterparty_and_small_book_rules(self):
+        rows=[{'amount':'-600.00','note':'委托收款','counterparty':'合成住房公积金中心'},
+              {'amount':'1.25','note':'利息'},
+              {'amount':'-200.00','note':'惠享服务'},
+              {'amount':'0.25','note':'企业认证','counterparty':'合成认证甲有限公司'},
+              {'amount':'0.50','note':'企业认证测试转账','counterparty':'合成支付乙有限公司'},
+              {'amount':'10000.00','note':'入资款','counterparty':'合成出资人甲'},
+              {'amount':'2000.00','note':'服务费','counterparty':'合成购买方丙有限公司'},
+              {'amount':'500.00','note':'企业认证'}]
+        inv=[{'item_name':'*现代服务*服务费'}]
+        out=self.suggest(rows,inv,[{'transaction_index':6,'invoice_index':0,'status':'matched'}])
+        self.assertEqual([x['account_code'] for x in out],['5602','5603','1221','2241','2241','3001','5001',None])
+        self.assertEqual(out[0]['sub_account'],'住房公积金（支出）')
+        self.assertIn('避免重复入账',out[0]['review'])
+        self.assertEqual(out[5]['sub_account'],'合成出资人甲')
+        self.assertEqual(out[6]['sub_account'],'合成购买方丙有限公司')
 
 if __name__=='__main__': unittest.main()

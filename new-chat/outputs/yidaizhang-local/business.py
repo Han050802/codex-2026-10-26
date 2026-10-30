@@ -8,12 +8,12 @@ import io
 import json
 import re
 import sqlite3
-from db import ApiError, amount, audit, now
+from db import ApiError, amount, audit, now, industry_names, remember_industry
 import client_profile
 
 HELP = [
  {'id':'clients','title':'客户与分工','text':'在客户中新建企业，分别选择会计制度与纳税性质。三名操作员始终都可编辑；账套授权名单只记录分工，不限制访问。服务状态可选未设置、服务中、已暂停、已终止，新客户默认为未设置。客户删除后进入回收站，可恢复；账套数据保留。每次保存带版本，冲突时刷新后重试。'},
- {'id':'invoices','title':'票据录入与凭证','text':'票据可手工录入或按模板CSV导入。金额、税额、价税合计须相等，同客户发票号码不能重复。选择借贷科目后生成平衡凭证。已生成凭证的票据不能直接修改删除。本地不连接税局，不提供自动取票或OCR。'},
+ {'id':'invoices','title':'票据录入与凭证','text':'票据可手工录入或按模板CSV导入。金额、税额、价税合计须相等，同客户发票号码不能重复。选择借贷科目后生成平衡凭证。已生成凭证的票据不能直接修改删除。本地不连接税局，不提供自动取票。客户账套的流水发票核对支持文件识别，原件与识别结果保存在本地。制证后可在凭证的“原件与依据”中查看原件、原始识别结果及制证依据；历史未留存原件无法自动补回。'},
  {'id':'ticket-workflow','title':'取票待办与人工资料核对','text':'预约取票只建立本地待办，预约到期不会自动登录或采集。待办完成表示人工完成待办，不代表取得发票；实际票据仍须登记或导入。核对状态只记录操作员对资料的人工核对，不是税局认证结果；不保存税局账号或密码。删除保留历史与审计，三名操作员均可编辑。'},
  {'id':'tax','title':'报税登记','text':'报税板块只记录人工或导入的申报、缴款与身份验证状态。提交状态代表操作员已核实登记，须填写回执编号或上传证明；本地应用不会向税局申报或缴款。'},
  {'id':'fees','title':'合同收费、欠费和冲销','text':'合同按起止月份及月服务费计算。所选月显示截止当月末累计应收和累计实收，超出应收的部分是预收。收款只能新增；登记错误通过冲销产生反向记录，保留原始记录与审计。合同终止后保留截止终止月的应收。'},
@@ -112,6 +112,7 @@ def save(conn, table, data, old, user):
         cur = conn.execute('INSERT INTO '+table+'('+','.join(columns)+') VALUES('+','.join('?' for _ in columns)+')',[data[k] for k in columns])
         ident = cur.lastrowid
     result=fetched(conn,table,ident)
+    if table=='clients':remember_industry(conn,result['industry'])
     audit(conn,user,'update' if old else 'create',table,ident,{'fields':list(data),'before':old,'after':result})
     return result
 
@@ -334,7 +335,7 @@ def bootstrap(conn,pd,demo):
     clients=[obj(r) for r in conn.execute('SELECT * FROM clients ORDER BY id')]
     users=[dict(r) for r in conn.execute('SELECT id,username,name,version,enabled FROM users ORDER BY id')]
     cm={x['id']:x['name'] for x in clients};um={x['id']:x['name'] for x in users}
-    data.update(clients=clients,users=users)
+    data.update(clients=clients,users=users,industries=industry_names(conn))
     for table in ('invoices','notes','contracts','receipts','projects','tax_records','tax_agents','invoice_requests'):
         rows=[obj(r) for r in conn.execute('SELECT * FROM '+table+(' WHERE deleted=0' if table in ('tax_agents','notes','contracts','projects','tax_records') else '')+' ORDER BY id DESC')]
         for r in rows:
@@ -376,6 +377,7 @@ def handle(conn,method,path,payload,user,query,demo=False):
         import ticket_workflow
         return ticket_workflow.handle(conn,method,path,payload,user,query)
     if method=='GET' and path=='/api/bootstrap':return bootstrap(conn,query.get('period',dt.date.today().strftime('%Y-%m')),demo)
+    if method=='GET' and path=='/api/industries':return {'industries':industry_names(conn)}
     if method=='GET' and path=='/api/help':
         term=query.get('q','').lower().strip()
         return {'articles':[h for h in HELP if not term or term in (h['title']+h['text']).lower()],'source':'local_help'}

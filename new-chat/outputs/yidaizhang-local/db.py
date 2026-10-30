@@ -37,6 +37,36 @@ def audit(conn, user, action, entity, entity_id, detail):
                   json.dumps(detail, ensure_ascii=False, default=str), now()))
 
 
+def valid_industry(value):
+    """Normalize a reusable industry, excluding invalid legacy values."""
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value if value and len(value) <= 80 and '\x00' not in value else None
+
+
+def remember_industry(conn, value):
+    """Record an industry in the caller's customer-write transaction."""
+    value = valid_industry(value)
+    if value:
+        conn.execute('INSERT OR IGNORE INTO client_industries(name,name_key,created_at) VALUES(?,?,?)',
+                     (value, value.casefold(), now()))
+
+
+def industry_names(conn):
+    """Return saved and legacy customer industries without changing the database."""
+    names = {}
+    for row in conn.execute('SELECT name FROM client_industries ORDER BY rowid'):
+        value = valid_industry(row['name'])
+        if value:
+            names.setdefault(value.casefold(), value)
+    for row in conn.execute('SELECT industry FROM clients ORDER BY id'):
+        value = valid_industry(row['industry'])
+        if value:
+            names.setdefault(value.casefold(), value)
+    return sorted(names.values(), key=str.casefold)
+
+
 def initialize(db_path):
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = connect(db_path)
@@ -47,6 +77,7 @@ def initialize(db_path):
     CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),csrf TEXT NOT NULL,created_at TEXT NOT NULL,expires_at REAL NOT NULL);
     CREATE TABLE IF NOT EXISTS audit_logs(id INTEGER PRIMARY KEY,user_id INTEGER REFERENCES users(id),username TEXT NOT NULL,action TEXT NOT NULL,entity TEXT NOT NULL,entity_id TEXT NOT NULL,detail TEXT NOT NULL,created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS clients(id INTEGER PRIMARY KEY,name TEXT NOT NULL,code TEXT NOT NULL UNIQUE,taxpayer_type TEXT NOT NULL,standard TEXT NOT NULL,industry TEXT NOT NULL DEFAULT '',region TEXT NOT NULL DEFAULT '',start_period TEXT NOT NULL,accountant_id INTEGER REFERENCES users(id),enabled INTEGER NOT NULL DEFAULT 1,labels TEXT NOT NULL DEFAULT '[]',service_status TEXT NOT NULL DEFAULT 'unset',note TEXT NOT NULL DEFAULT '',version INTEGER NOT NULL DEFAULT 1,deleted INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS client_industries(name TEXT NOT NULL COLLATE NOCASE UNIQUE,name_key TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY,client_id INTEGER NOT NULL REFERENCES clients(id),text TEXT NOT NULL,user_id INTEGER REFERENCES users(id),created_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY,name TEXT NOT NULL,path TEXT UNIQUE NOT NULL,size INTEGER NOT NULL,sha256 TEXT NOT NULL,user_id INTEGER REFERENCES users(id),created_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS invoices(id INTEGER PRIMARY KEY,client_id INTEGER NOT NULL REFERENCES clients(id),period TEXT NOT NULL,kind TEXT NOT NULL,number TEXT NOT NULL,date TEXT NOT NULL,category TEXT NOT NULL DEFAULT '',summary TEXT NOT NULL DEFAULT '',amount_fen INTEGER NOT NULL,tax_fen INTEGER NOT NULL,total_fen INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'unprocessed',voucher_id INTEGER,attachment_id INTEGER REFERENCES files(id),version INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(client_id,number));
@@ -64,6 +95,8 @@ def initialize(db_path):
     for field in ('profile_json','sensitive_json'):
         if field not in client_columns:
             conn.execute("ALTER TABLE clients ADD COLUMN "+field+" TEXT NOT NULL DEFAULT '{}'")
+    for row in conn.execute('SELECT industry FROM clients ORDER BY id'):
+        remember_industry(conn, row['industry'])
     if 'enabled' not in {r['name'] for r in conn.execute('PRAGMA table_info(tax_agents)')}:
         conn.execute('ALTER TABLE tax_agents ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1')
     import finance

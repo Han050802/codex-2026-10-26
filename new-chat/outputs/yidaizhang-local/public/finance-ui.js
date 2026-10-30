@@ -1,13 +1,15 @@
 /* Account-book workspace. Money sent to the server is always integer fen. */
 import { renderCompanyWorkspace, renderCompanyHome, bindCompanyWorkspace, updateCompanyReportRange } from './company-workspace.js';
-import { renderCompanyVouchers, bindCompanyVouchers, focusCompanyVoucher } from './company-vouchers.js';
-import { renderCompanyBalance, bindCompanyBalance } from './company-balance.js';
+import { renderCompanyVouchers, bindCompanyVouchers, focusCompanyVoucher, resetCompanyVoucherFilters } from './company-vouchers.js';
+import { renderCompanyBalance, bindCompanyBalance, clearCompanyBalanceRoute } from './company-balance.js';
+import { renderReconcile, bindReconcile, setReconcileCompany } from './reconcile.js';
+import { openSourceArchive } from './source-archive.js';
 let book = null;
 let activeView = 'home';
 let requestedView = null;
 let bookContext = null;
 const bookBindings = new WeakSet();
-export function setBookView(view) { if (['home','vouchers','ledger','reports','accounts','assets','inventory','payroll','journals','period'].includes(view)) { activeView = view; requestedView = view; } }
+export function setBookView(view) { if (['home','reconcile','vouchers','ledger','reports','accounts','assets','inventory','payroll','journals','period'].includes(view)) { activeView = view; requestedView = view; } }
 let ledgerAccount = '';
 let activeClient = null;
 let maintenanceContext = '';
@@ -117,6 +119,7 @@ async function runMaintenanceDelete(scope,ctx){
 }
 
 export async function renderBook(clientId,period,ctx) {
+  setReconcileCompany(ctx.clients?.find(client=>Number(client.id)===Number(clientId)));
   if(activeClient!==Number(clientId)){activeView=requestedView||'home';ledgerAccount='';activeClient=Number(clientId);}
   requestedView=null;bookContext=ctx;
   book=await ctx.api(`/api/books/${Number(clientId)}?period=${encodeURIComponent(period)}`);
@@ -124,7 +127,7 @@ export async function renderBook(clientId,period,ctx) {
   return renderCompanyWorkspace(book,ctx,{view:activeView,content:renderView()});
 }
 
-function renderView(){if(activeView==='home')return renderCompanyHome(book);if(activeView==='vouchers')return renderCompanyVouchers(book,bookContext);if(activeView==='ledger')return renderCompanyBalance(book,bookContext);const html=(()=>{switch(activeView){case 'ledger':return renderLedger();case 'reports':return renderReports();case 'accounts':return renderAccounts();case 'assets':return renderAssets();case 'inventory':return renderInventory();case 'payroll':return renderPayroll();case 'journals':return renderJournals();case 'period':return renderPeriod();default:return renderVouchers();}})();return enhanceMaintenance(html);}
+function renderView(){if(activeView==='home')return renderCompanyHome(book);if(activeView==='reconcile')return `<div data-company-reconcile>${renderReconcile([book.client],{client:book.client})}</div>`;if(activeView==='vouchers')return renderCompanyVouchers(book,bookContext);if(activeView==='ledger')return renderCompanyBalance(book,bookContext);const html=(()=>{switch(activeView){case 'ledger':return renderLedger();case 'reports':return renderReports();case 'accounts':return renderAccounts();case 'assets':return renderAssets();case 'inventory':return renderInventory();case 'payroll':return renderPayroll();case 'journals':return renderJournals();case 'period':return renderPeriod();default:return renderVouchers();}})();return enhanceMaintenance(html);}
 function renderVouchers(){const vouchers=book.vouchers||[];return actionbar('记账凭证',button('新增凭证','new-voucher','',true)+exportLink('vouchers','导出凭证'),'凭证保存时校验借贷平衡；来源单据可追溯，作废记录保留。')+table(['凭证日期','凭证字号','摘要','分录 / 会计科目','借方金额','贷方金额','状态','操作'],vouchers.map(v=>`<tr class="${v.status==='void'?'book-void':''}"><td>${h(v.date)}</td><td class="mono">${h(v.number)}</td><td>${h(v.summary)}<small class="muted book-source">${h(v.source_type||'manual')}${v.source_id?' #'+h(v.source_id):''}</small></td><td>${v.lines.map(l=>`<div>${h(l.account_code)} ${h(l.account_name)}</div>`).join('')}</td><td class="number">${v.lines.map(l=>`<div>${l.debit_fen?money(l.debit_fen):'—'}</div>`).join('')}</td><td class="number">${v.lines.map(l=>`<div>${l.credit_fen?money(l.credit_fen):'—'}</div>`).join('')}</td><td>${v.status==='void'?statusBadge('已作废'):statusBadge(v.reviewed?'已审核':'待审核',v.reviewed?'success':'pending')}</td><td class="book-row-actions">${v.status==='void'?'—':`${v.source_type==='manual'?button('编辑','edit-voucher',`data-id="${v.id}"`):(!v.reviewed?button('撤回来源','withdraw-source',`data-id="${v.id}"`):'')}${button(v.reviewed?'取消审核':'审核','review-voucher',`data-id="${v.id}"`)}${button('资金分类','cashflow-voucher',`data-id="${v.id}"`)}${v.source_type==='manual'?button('作废','void-voucher',`data-id="${v.id}"`):''}`}</td></tr>`));}
 function renderLedger(){const rows=(book.ledger||[]).filter(r=>!ledgerAccount||r.account_code===ledgerAccount);let debit=0,credit=0;rows.forEach(r=>{debit+=r.debit_fen;credit+=r.credit_fen;});return actionbar('科目余额表与明细账',exportLink('trial-balance','导出余额表'))+table(['科目编码','科目名称','期初借方','期初贷方','本期借方','本期贷方','期末借方','期末贷方'],(book.trial_balance||[]).map(r=>`<tr><td>${h(r.account_code)}</td><td>${h(r.account_name)}</td>${['opening_debit_fen','opening_credit_fen','debit_fen','credit_fen','closing_debit_fen','closing_credit_fen'].map(k=>`<td class="number">${money(r[k])}</td>`).join('')}</tr>`))+'<div class="book-section-gap"></div>'+actionbar('凭证明细账',`<select data-ledger-account aria-label="筛选明细账科目"><option value="">全部科目</option>${accountOptions(ledgerAccount,null,false)}</select>`)+table(['日期','凭证字号','科目','摘要','借方','贷方','该科目余额'],rows.map(r=>`<tr><td>${h(r.date)}</td><td>${h(r.number)}</td><td>${h(r.account_code)} ${h(r.account_name)}</td><td>${h(r.summary)}</td><td class="number">${money(r.debit_fen)}</td><td class="number">${money(r.credit_fen)}</td><td class="number">${money(r.balance_fen)}</td></tr>`))+`<p class="book-totals">本期明细合计：借方 ${money(debit)}　贷方 ${money(credit)}</p>`;}
 function renderReports(){const r=book.reports||{},bs=r.balance_sheet||{},pl=r.profit_loss||{},cf=r.cash_flow||{};return actionbar('财务报表',button('打印报表','print'),'报表来自期初与有效凭证；本页显示所选期间。现金流必须明确活动分类。')+`<div class="book-report-grid"><section class="book-report"><h3>资产负债管理表</h3><p class="muted">${h(bs.basis||'按总账科目聚合，重分类及期末调整由会计复核。')}</p>${table(['项目','金额'],(bs.rows||[]).map(r=>`<tr><td>${h(r.name)}</td><td class="number">${money(r.amount_fen)}</td></tr>`))}<div class="book-report-total"><span>资产合计 <b>${money(bs.assets_fen)}</b></span><span>负债合计 <b>${money(bs.liabilities_fen)}</b></span><span>所有者权益合计 <b>${money(bs.equity_fen)}</b></span></div><p>${statusBadge(bs.balanced?'资产 = 负债 + 所有者权益':'资产负债不平，请检查期初及凭证',bs.balanced?'success':'danger')}</p></section><section class="book-report"><h3>利润管理表</h3>${table(['项目','金额'],(pl.rows||[]).map(r=>`<tr><td>${h(r.name)}</td><td class="number">${money(r.amount_fen)}</td></tr>`))}<div class="book-report-total"><span>收入合计 <b>${money(pl.income_fen)}</b></span><span>成本费用合计 <b>${money(pl.expense_fen)}</b></span><span>本期利润 <b>${money(pl.profit_fen)}</b></span><span>本年累计利润 <b>${money(pl.ytd_profit_fen)}</b></span></div></section></div><section class="book-report book-section-gap"><h3>现金流量汇总</h3>${table(['活动分类','流入','流出','净额'],(cf.rows||[]).map(r=>`<tr><td>${h(r.name)}</td><td class="number">${money(r.inflow_fen)}</td><td class="number">${money(r.outflow_fen)}</td><td class="number">${money(r.net_fen)}</td></tr>`))}<p class="${cf.complete?'book-ok':'book-warning'}">${cf.complete?'本期资金分录已完成分类。':`仍有 ${Number(cf.unclassified_count||0)} 条资金分录待分类，请在凭证中指定活动分类后再使用汇总。`}</p><p class="muted">按资金分录人工指定的经营、投资、筹资及内部划转分类汇总。此表是核对辅助表，法定现金流量表的行次、补充资料及行业调整须经会计复核。</p></section>`;}
@@ -137,16 +140,26 @@ function renderPeriod(){return actionbar('期末检查与结账',button('重新�
 
 export function bindBook(container,ctx){
   const shell=container.querySelector('.cw-shell');if(!shell||bookBindings.has(shell))return;bookBindings.add(shell);
+  if(activeView!=='ledger')clearCompanyBalanceRoute();
   const actions={
     perform:(action,id)=>performAction(action,Number(id),ctx),
     reportRange:(start,end)=>updateCompanyReportRange(container,start,end),
-    view:view=>{if(!['home','vouchers','ledger','reports','accounts','assets','inventory','payroll','journals','period'].includes(view))return;activeView=view;repaint(container,ctx);},
+    view:view=>{if(!['home','reconcile','vouchers','ledger','reports','accounts','assets','inventory','payroll','journals','period'].includes(view))return;const refresh=activeView==='reconcile'&&view!=='reconcile';activeView=view;if(refresh)return ctx.reload();repaint(container,ctx);},
+    vouchers:async period=>{
+      if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)||period<book.client.start_period)throw new Error('请选择有效的凭证期间');
+      const clientId=book.client.id;
+      resetCompanyVoucherFilters(clientId,period);
+      activeView='vouchers';
+      ctx.setBook(clientId,period);
+      await ctx.reload();
+    },
     period:async period=>{if(!/^\d{4}-\d{2}$/.test(period))throw new Error('请选择有效的会计期间');if(period<book.client.start_period)throw new Error('所选期间早于建账期间');ctx.setBook(book.client.id,period);await ctx.reload();},
     company:async id=>{const client=ctx.clients.find(c=>Number(c.id)===id);const period=book.period<(client?.start_period||'')?client.start_period:book.period;ctx.setBook(id,period);await ctx.reload();},
     agency:nav=>ctx.navigateCompany?.(nav,book.client.id)
   };
   bindCompanyWorkspace(container,book,ctx,actions);
-  if(activeView==='vouchers')bindCompanyVouchers(container,book,ctx,actions);
+  if(activeView==='reconcile')bindReconcile(container.querySelector('[data-company-reconcile]'),ctx.api,[book.client],ctx.openReconciliationBalance,{client:book.client,modal:ctx.modal,loadHistory:true,openVoucher:ctx.openReconciliationVoucher});
+  else if(activeView==='vouchers')bindCompanyVouchers(container,book,ctx,actions);
   else if(activeView==='ledger')bindCompanyBalance(container,book,ctx,actions);
   else if(activeView!=='home')bindBookContent(container,ctx);
 }
@@ -165,6 +178,7 @@ async function performAction(action,id,ctx){
     case 'print':window.print();return;
     case 'new-voucher':return voucherModal(ctx);
     case 'edit-voucher':return voucherModal(ctx,book.vouchers.find(v=>v.id===id));
+    case 'voucher-sources':return openSourceArchive(ctx,{clientId:book.client.id,voucherId:id});
     case 'review-voucher':{const v=book.vouchers.find(v=>v.id===id);return save(ctx,`${base()}/vouchers/${id}/review`,{version:v.version,reviewed:!v.reviewed});}
     case 'void-voucher':{const v=book.vouchers.find(v=>v.id===id);return confirm(ctx,'作废凭证',`确认作废 ${v.number}？记录会保留，关联业务凭证受来源规则约束。`,()=>save(ctx,`${base()}/vouchers/${id}`,{version:v.version},'DELETE'));}
     case 'cashflow-voucher':return cashflowModal(ctx,id);

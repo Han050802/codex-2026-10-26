@@ -24,11 +24,17 @@ function stateFor(book) {
   if (!states.has(key)) states.set(key,{query:'',status:'active',source:'',dateFrom:'',dateTo:'',min:'',max:'',page:1,size:500,selected:new Set(),busy:false});
   return states.get(key);
 }
-export function focusCompanyVoucher(clientId,period,voucherId) {
-  if(!/^\d+$/.test(String(clientId))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)||!/^\d+$/.test(String(voucherId)))return false;
+export function resetCompanyVoucherFilters(clientId,period) {
+  if(!/^\d+$/.test(String(clientId))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(period))return false;
   const state=stateFor({client:{id:clientId},period});
-  Object.assign(state,{query:'',status:'active',source:'',dateFrom:'',dateTo:'',min:'',max:'',page:1,focusId:String(voucherId),scrollToSaved:null});
+  Object.assign(state,{query:'',status:'active',source:'',dateFrom:'',dateTo:'',min:'',max:'',page:1,scrollToSaved:null});
+  delete state.focusId;
   state.selected.clear();
+  return true;
+}
+export function focusCompanyVoucher(clientId,period,voucherId) {
+  if(!/^\d+$/.test(String(voucherId))||!resetCompanyVoucherFilters(clientId,period))return false;
+  stateFor({client:{id:clientId},period}).focusId=String(voucherId);
   return true;
 }
 const isActive = v => v.status !== 'void';
@@ -59,7 +65,7 @@ function rowHtml(v,book,state,h,m) {
   const edit=active&&(v.source_type||'manual')==='manual';
   const id=h(v.id),amount=n=>n?m(n):'';
   const action=(label,name,disabled=false)=>`<button type="button" data-book-action="${name}" data-id="${id}" ${disabled?'disabled':''}>${label}</button>`;
-  return `<tbody class="cv-voucher ${active?'':'cv-void'}" data-cv-voucher="${id}"><tr class="cv-meta-row"><td class="cv-select" rowspan="${lines.length+2}"><input type="checkbox" data-cv-row="${id}" aria-label="选择凭证 ${h(voucherNumber(v))}" ${state.selected.has(String(v.id))?'checked':''} ${selectable?'':'disabled'}></td><td colspan="4"><div class="cv-meta"><span>日期：${h(v.date)}</span><span>制单人：${h(v.created_by_name||v.preparer||'—')}</span><span>凭证字号：<button type="button" class="cv-voucher-number" ${edit&&!locked&&!v.reviewed?`data-book-action="edit-voucher" data-id="${id}"`:''}>${h(voucherNumber(v))}</button></span><span class="cv-attachments">附单据 <u>${Number(v.attachment_count||0)} 张</u></span><span class="cv-file-count" title="附件数量为手工记录的单据张数">${icon('clip')}<u>${Number(v.attachment_count||0)}</u></span>${!active?'<span class="cv-state">已作废</span>':v.reviewed?'<span class="cv-state">已审核</span>':''}<span class="cv-row-actions">${active?(edit?action('编辑','edit-voucher',locked||v.reviewed):action('撤回来源','withdraw-source',locked||v.reviewed))+action(v.reviewed?'取消审核':'审核','review-voucher',locked)+action('资金分类','cashflow-voucher',locked)+(edit?action('作废','void-voucher',locked||v.reviewed):''):''}</span></div></td></tr>${lines.map(l=>`<tr class="cv-line"><td title="${h(l.summary||v.summary)}">${h(l.summary||v.summary)}</td><td title="${h(l.account_code)} ${h(l.account_name)}">${h(l.account_code)} ${h(l.account_name)}</td><td class="cv-amount">${amount(l.debit_fen)}</td><td class="cv-amount">${amount(l.credit_fen)}</td></tr>`).join('')}<tr class="cv-total"><td colspan="2">${icon('total')}<strong>总计</strong></td><td class="cv-amount"><strong>${m(sum(lines,'debit_fen'))}</strong></td><td class="cv-amount"><strong>${m(sum(lines,'credit_fen'))}</strong></td></tr></tbody>`;
+  return `<tbody class="cv-voucher ${active?'':'cv-void'}" data-cv-voucher="${id}"><tr class="cv-meta-row"><td class="cv-select" rowspan="${lines.length+2}"><input type="checkbox" data-cv-row="${id}" aria-label="选择凭证 ${h(voucherNumber(v))}" ${state.selected.has(String(v.id))?'checked':''} ${selectable?'':'disabled'}></td><td colspan="4"><div class="cv-meta"><span>日期：${h(v.date)}</span><span>制单人：${h(v.created_by_name||v.preparer||'—')}</span><span>凭证字号：<button type="button" class="cv-voucher-number" ${edit&&!locked&&!v.reviewed?`data-book-action="edit-voucher" data-id="${id}"`:''}>${h(voucherNumber(v))}</button></span><span class="cv-attachments">附单据 <u>${Number(v.attachment_count||0)} 张</u></span><span class="cv-file-count"><button type="button" class="cv-archive-button" data-book-action="voucher-sources" data-id="${id}" aria-label="查看凭证 ${h(voucherNumber(v))} 的原件与依据">${icon('clip')}原件与依据</button></span>${!active?'<span class="cv-state">已作废</span>':v.reviewed?'<span class="cv-state">已审核</span>':''}<span class="cv-row-actions">${active?(edit?action('编辑','edit-voucher',locked||v.reviewed):action('撤回来源','withdraw-source',locked||v.reviewed))+action(v.reviewed?'取消审核':'审核','review-voucher',locked)+action('资金分类','cashflow-voucher',locked)+(edit?action('作废','void-voucher',locked||v.reviewed):''):''}</span></div></td></tr>${lines.map(l=>`<tr class="cv-line"><td title="${h(l.summary||v.summary)}">${h(l.summary||v.summary)}</td><td title="${h(l.account_code)} ${h(l.account_name)}">${h(l.account_code)} ${h(l.account_name)}</td><td class="cv-amount">${amount(l.debit_fen)}</td><td class="cv-amount">${amount(l.credit_fen)}</td></tr>`).join('')}<tr class="cv-total"><td colspan="2">${icon('total')}<strong>总计</strong></td><td class="cv-amount"><strong>${m(sum(lines,'debit_fen'))}</strong></td><td class="cv-amount"><strong>${m(sum(lines,'credit_fen'))}</strong></td></tr></tbody>`;
 }
 export function renderCompanyVouchers(book,ctx={}) {
   const h=ctx.escape||esc,m=ctx.money||money,state=stateFor(book),{rows,pages,page}=pageRows(book,state);
