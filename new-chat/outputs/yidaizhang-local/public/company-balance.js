@@ -1,4 +1,5 @@
 import {createBalanceXlsx, balanceDetailLabel} from './balance-xlsx.js';
+import {downloadStatutory, renderStatutorySheet} from './statements.js';
 
 /* The company balance report reads persisted account-book data. All amounts are integer fen. */
 let activeCompany = null;
@@ -480,11 +481,35 @@ function postingSummary(current, book, ctx) {
   return `<div class="cob-posting-summary" role="status"><strong>${h(book.client.name,ctx)} · 本次保存的分录</strong><ul>${entries}</ul><p>下方余额表的本期发生额汇总所选期间全部凭证，可能与本次金额不同。</p></div>`;
 }
 
+function activeSheet(current) {
+  return current.sheet === 'balance' || current.sheet === 'profit' ? current.sheet : 'trial';
+}
+
+function sheetTabs(current) {
+  const sheet = activeSheet(current);
+  const items = [['trial', '科目余额表'], ['balance', '资产负债表'], ['profit', '利润表']];
+  return `<div class="cob-sheet-tabs" role="tablist" aria-label="报表切换">${items.map(([id, label]) => `<button type="button" role="tab" data-cob-action="sheet-${id}" class="${sheet === id ? 'active' : ''}" aria-selected="${sheet === id}">${label}</button>`).join('')}</div>`;
+}
+
+function statementHelpers(ctx) {
+  return {h: value => h(value, ctx), money: value => money(value, ctx)};
+}
+
+function statementToolbar(book, ctx, kind) {
+  const profit = kind === 'profit';
+  return `<div class="cob-toolbar cob-statement-toolbar"><p class="cob-statement-caption">按账期 ${h(book.period, ctx)} 生成，版式与${profit ? '会小企02' : '会小企01'}一致</p><div class="cob-toolbar-actions"><button type="button" data-cob-action="print">${icon('print')}打印</button><button type="button" data-cob-action="${profit ? 'export-profit' : 'export-balance-sheet'}">${icon('export')}下载${profit ? '利润表' : '资产负债表'}</button><button type="button" data-cob-action="refresh">${icon('refresh')}刷新</button></div></div>`;
+}
+
 export function renderCompanyBalance(book, ctx) {
   const current = getState(book);
+  const sheet = activeSheet(current);
+  if (sheet !== 'trial') {
+    const title = sheet === 'profit' ? '利润表' : '资产负债表';
+    return `<section class="company-balance" data-cob-company="${h(book.client.id,ctx)}" data-cob-sheet="${sheet}" aria-label="${title}" aria-busy="false">${sheetTabs(current)}${statementToolbar(book, ctx, sheet)}<div class="cob-statement-view">${renderStatutorySheet(book, sheet, statementHelpers(ctx))}</div></section>`;
+  }
   const data = reportData(book,current);
   const unavailable = current.loading || Boolean(current.failedKey);
-  return `<section class="company-balance" data-cob-company="${h(book.client.id,ctx)}" aria-label="科目余额表" aria-busy="${current.loading}"><div class="cob-toolbar">${subjectMenu(current,ctx)}<div class="cob-toolbar-actions"><button type="button" class="cob-delete-mode" data-cob-action="delete-mode" ${current.deleting?'disabled':''}>${current.deleteMode?'退出删除':'删除数据'}</button>${check('ytd','显示本年累计',current.ytd)}<label class="cob-expand-all"><input type="checkbox" data-cob-check="expanded" ${current.expanded?'checked':''}><span class="cob-switch" aria-hidden="true"></span><span>全部展开</span></label><button type="button" data-cob-action="print" ${unavailable?'disabled':''}>${icon('print')}云打印<span class="cob-toolbar-pipe">|</span>${icon('down')}</button><button type="button" data-cob-action="export" ${current.exporting?'disabled':''} title="导出全账套按标准表结转口径的余额总表">${icon('export')}${current.exporting?'导出中…':'导出总表'}</button><button type="button" data-cob-action="refresh" ${current.loading?'disabled':''}>${icon('refresh')}刷新</button></div></div>${postingSummary(current,book,ctx)}${projectionNotice(data,ctx)}${current.error?`<div class="cob-query-error" role="alert"><span>余额表读取失败：${h(current.error,ctx)}</span><button type="button" data-cob-action="refresh">重新读取</button></div>`:''}${filters(current,book,ctx)}${deletionToolbar(data,current,book,ctx)}${tableMarkup(data,current,book,ctx)}</section>`;
+  return `<section class="company-balance" data-cob-company="${h(book.client.id,ctx)}" data-cob-sheet="trial" aria-label="科目余额表" aria-busy="${current.loading}">${sheetTabs(current)}<div class="cob-toolbar">${subjectMenu(current,ctx)}<div class="cob-toolbar-actions"><button type="button" class="cob-delete-mode" data-cob-action="delete-mode" ${current.deleting?'disabled':''}>${current.deleteMode?'退出删除':'删除数据'}</button>${check('ytd','显示本年累计',current.ytd)}<label class="cob-expand-all"><input type="checkbox" data-cob-check="expanded" ${current.expanded?'checked':''}><span class="cob-switch" aria-hidden="true"></span><span>全部展开</span></label><button type="button" data-cob-action="print" ${unavailable?'disabled':''}>${icon('print')}云打印<span class="cob-toolbar-pipe">|</span>${icon('down')}</button><button type="button" data-cob-action="export" ${current.exporting?'disabled':''} title="导出全账套按标准表结转口径的余额总表">${icon('export')}${current.exporting?'导出中…':'导出总表'}</button><button type="button" data-cob-action="refresh" ${current.loading?'disabled':''}>${icon('refresh')}刷新</button></div></div>${postingSummary(current,book,ctx)}${projectionNotice(data,ctx)}${current.error?`<div class="cob-query-error" role="alert"><span>余额表读取失败：${h(current.error,ctx)}</span><button type="button" data-cob-action="refresh">重新读取</button></div>`:''}${filters(current,book,ctx)}${deletionToolbar(data,current,book,ctx)}${tableMarkup(data,current,book,ctx)}</section>`;
 }
 
 function resolveHost(container) {
@@ -832,9 +857,25 @@ export function bindCompanyBalance(container, book, ctx, actions={}) {
         case 'filters': current.filtersOpen=!current.filtersOpen; repaint(host,book,ctx,actions); return;
         case 'show-all': current.showZero=true; current.showActivityZero=true; current.category=''; current.codeFrom=current.codeTo=current.min=current.max=''; current.levelFrom='1'; current.levelTo='6'; current.draft={}; repaint(host,book,ctx,actions); return;
         case 'reset': { const replacement=freshState(book); replacement.data=matchesBasis(current.data,replacement)&&current.data?.start_period===book.period&&current.data?.end_period===book.period?current.data:null; state=replacement; repaint(host,book,ctx,actions); return; }
-        case 'refresh': current.data=null; current.failedKey=''; queryData(host,book,ctx,actions,{force:true}).catch(reportError); return;
+        case 'sheet-trial':
+        case 'sheet-balance':
+        case 'sheet-profit': {
+          const next = action.dataset.cobAction.slice(6);
+          if ((current.sheet || 'trial') === next) return;
+          current.sheet = next;
+          repaint(host,book,ctx,actions);
+          return;
+        }
+        case 'refresh':
+          if (current.sheet === 'balance' || current.sheet === 'profit') {
+            Promise.resolve(typeof ctx.reload === 'function' ? ctx.reload() : null).catch(reportError);
+            return;
+          }
+          current.data=null; current.failedKey=''; queryData(host,book,ctx,actions,{force:true}).catch(reportError); return;
         case 'print': window.print(); return;
         case 'export': exportExcel(book,ctx).catch(reportError); return;
+        case 'export-balance-sheet': downloadStatutory(book,'balance'); ctx.toast(`已生成${book.period}资产负债表`); return;
+        case 'export-profit': downloadStatutory(book,'profit'); ctx.toast(`已生成${book.period}利润表`); return;
       }
     } catch(error) { reportError(error); }
   });

@@ -69,3 +69,15 @@
 .cob-gear-cell>.cob-selection,.cob-index>.cob-selection{margin:0}
 .cob-delete-preview{max-height:190px;overflow:auto;padding-left:24px;line-height:24px}
 @media print{.cob-delete-bar,.cob-selection{display:none!important}}
+.cob-toolbar,.cob-toolbar-actions{overflow:visible}
+.cob-sheet-tabs{display:flex;align-items:flex-end;gap:4px;height:42px;padding:6px 12px 0;background:#fff;border-bottom:1px solid #e4e7eb;flex:none}
+.cob-sheet-tabs button{height:36px;margin:0;padding:0 18px;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:#f4f6f8;color:#333;font:inherit;font-size:14px}
+.cob-sheet-tabs button.active{background:var(--cob-teal);color:#fff;font-weight:700}
+.cob-sheet-tabs button:hover:not(.active){background:#e5f6f6;color:#0d8c92}
+.cob-statement-toolbar{background:#fff;border-bottom:1px solid #eef1f4}
+.cob-statement-caption{margin:0;padding-left:14px;color:#667085;font-size:12px}
+.cob-statement-view{flex:1;min-height:0;overflow:auto;background:#fff;padding:16px 18px 28px}
+.cw-content>.company-balance .cob-statement-view{height:0}
+.cob-statement-view .book-report{border:0;padding:0;background:transparent}
+.cob-statement-view .statutory-sheet{max-height:none}
+@media print{.cob-sheet-tabs,.cob-statement-caption{display:none!important}.cob-statement-view,.cw-content>.company-balance .cob-statement-view{height:auto;max-height:none;overflow:visible}}

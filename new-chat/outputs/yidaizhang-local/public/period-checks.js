@@ -5,6 +5,36 @@ let dispose = () => {};
 
 export function clearPeriodCheckDetails() { dispose(); dispose = () => {}; }
 
+const pageTargets = {
+  review: ['vouchers', '查看全部未审核凭证', true],
+  cashflow: ['vouchers', '打开凭证页', false],
+  journal: ['journals', '打开日记账', false],
+  payroll: ['payroll', '打开工资', false],
+  depreciation: ['assets', '打开固定资产', false],
+  asset_balance: ['assets', '打开固定资产', false],
+  inventory: ['inventory', '打开存货', false],
+  trial: ['ledger', '打开余额表', false],
+};
+function problemPlace(check) {
+  const rows = check.details?.rows || [];
+  const bits = rows.slice(0, 4).map(row => row.voucher_number || [row.account_code, row.account_name].filter(Boolean).join(' ') || row.name || row.employee_name || row.summary).filter(Boolean);
+  if (!bits.length) return '';
+  const noun = check.severity === 'warning' ? '需要人工复核' : '需要处理';
+  const total = Number(check.details?.total ?? rows.length);
+  return `${noun}：${bits.join('、')}${total > bits.length ? ` 等 ${total} 条` : ''}`;
+}
+function rowTarget(row) {
+  if (row.voucher_id) return {view: 'vouchers', id: row.voucher_id, label: '打开这张凭证'};
+  if (row.journal_id) return {view: 'journals', label: '打开日记账'};
+  if (row.payroll_id) return {view: 'payroll', label: '打开工资'};
+  if (row.asset_id) return {view: 'assets', label: '打开这项资产'};
+  return null;
+}
+function openButton(target) {
+  const id = target.id;
+  const voucher = target.view === 'vouchers' && /^\d+$/.test(String(id)) ? ` data-voucher-id="${Number(id)}"` : '';
+  return `<button type="button" class="period-check-open" data-period-goto="${h(target.view)}"${voucher}>${h(target.label)}</button>`;
+}
 export function renderPeriodCheckRows(book) {
   return (book.checks || []).map((check,index) => {
     const id = `period-check-detail-${index}`;
@@ -13,9 +43,15 @@ export function renderPeriodCheckRows(book) {
     const detail = check.details || {};
     const columns = detail.columns || [], rows = detail.rows || [];
     const total = Number(detail.total ?? rows.length);
-    const attrs = `type="button" data-period-check-trigger="${index}" aria-describedby="${id}" aria-controls="${id}" aria-expanded="false"`;
-    const grid = columns.length && rows.length ? `<div class="period-check-grid" tabindex="0" aria-label="检查明细列表"><table><thead><tr>${columns.map(c=>`<th scope="col">${h(c.label)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${columns.map(c=>`<td class="${c.format==='money'?'number':''}">${c.format==='money'?h(money(row[c.key])):h(row[c.key] ?? '—')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
-    return `<tr data-period-check="${index}"><td><button ${attrs} class="period-check-level"><span class="book-badge ${kind}">${h(level)}</span></button></td><td><button ${attrs} class="period-check-message">${h(check.message)} <span class="period-check-info" aria-hidden="true">ⓘ</span><span class="period-check-hint">悬停查看明细</span></button><section id="${id}" data-period-check-popup="${index}" class="period-check-popup" role="tooltip" tabindex="0" hidden><div class="period-check-heading"><strong>${h(check.message)}</strong><small>${h(book.client?.name)} · ${h(book.period)}</small></div><p class="period-check-reason">${h(detail.reason || '请点击“重新检查”读取本期最新检查明细。')}</p>${grid}<p class="period-check-next"><strong>处理方法：</strong>${h(detail.action || '核对后点击“重新检查”，查看最新结果。')}</p><div class="period-check-footer"><span>${rows.length ? (detail.truncated ? `共 ${total} 条，显示前 ${rows.length} 条；请到对应页面查看全部记录。` : `共 ${total} 条明细`) : '本公司 · 当前账期'}</span><span>移开收起 · Esc 关闭</span></div></section></td></tr>`;
+    const place = problemPlace(check);
+    const tip = [place, detail.reason, detail.action].filter(Boolean).map(text => String(text).replace(/[。．.]+$/u, '')).join('。');
+    const attrs = `type="button" data-period-check-trigger="${index}" aria-describedby="${id}" aria-controls="${id}" aria-expanded="false" title="${h(tip)}"`;
+    const targets = rows.map(rowTarget);
+    const actionable = targets.some(Boolean);
+    const grid = columns.length && rows.length ? `<div class="period-check-grid" tabindex="0" aria-label="检查明细列表"><table><thead><tr>${columns.map(c=>`<th scope="col">${h(c.label)}</th>`).join('')}${actionable?'<th scope="col">操作</th>':''}</tr></thead><tbody>${rows.map((row,rowIndex)=>`<tr>${columns.map(c=>`<td class="${c.format==='money'?'number':''}">${c.format==='money'?h(money(row[c.key])):h(row[c.key] ?? '—')}</td>`).join('')}${actionable?`<td>${targets[rowIndex]?openButton(targets[rowIndex]):''}</td>`:''}</tr>`).join('')}</tbody></table></div>` : '';
+    const destination = pageTargets[check.code];
+    const destinationButton = destination ? `<button type="button" class="period-check-open" data-period-goto="${destination[0]}" ${destination[2]?'data-unreviewed="1"':''}>${h(destination[1])}</button>` : '';
+    return `<tr data-period-check="${index}"><td><button ${attrs} class="period-check-level"><span class="book-badge ${kind}">${h(level)}</span></button></td><td><button ${attrs} class="period-check-message">${h(check.message)} <span class="period-check-info" aria-hidden="true">ⓘ</span><span class="period-check-hint">悬停或点击查看问题位置</span></button><section id="${id}" data-period-check-popup="${index}" class="period-check-popup" role="tooltip" tabindex="0" hidden><div class="period-check-heading"><strong>${h(check.message)}</strong><small>${h(book.client?.name)} · ${h(book.period)}</small></div>${place?`<p class="period-check-where"><strong>问题位置：</strong>${h(place)}</p>`:''}<p class="period-check-reason">${h(detail.reason || '请点击“重新检查”读取本期最新检查明细。')}</p>${grid}<p class="period-check-next"><strong>处理方法：</strong>${h(detail.action || '核对后点击“重新检查”，查看最新结果。')}</p><div class="period-check-footer"><span>${rows.length ? (detail.truncated ? `共 ${total} 条，显示前 ${rows.length} 条；请到对应页面查看全部记录。` : `共 ${total} 条明细`) : '本公司 · 当前账期'}</span>${destinationButton}<span>移开收起 · Esc 关闭 · 点击记录可进入对应页面</span></div></section></td></tr>`;
   });
 }
 

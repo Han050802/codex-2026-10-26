@@ -588,5 +588,88 @@ class FinanceTest(unittest.TestCase):
         self.assertError(409,self.call,f'assets/{b["id"]}',{'version':card['version'],'reason':'合成删除'},method='DELETE')
         self.assertTrue(self.call(method='GET',period='2026-02')['reports']['balance_sheet']['balanced'])
 
+    def statutory_row(self, rows, line, side):
+        key = 'asset_line' if side == 'asset' else 'equity_line'
+        return next(row for row in rows if str(row[key]) == str(line))
+
+    def profit_row(self, rows, line):
+        return next(row for row in rows if str(row['line']) == str(line))
+
+    def test_statutory_statements_match_small_enterprise_forms(self):
+        self.call('opening', {'version': 1, 'balances': [
+            finance._entry('1002', 10000000), finance._entry('3001', credit=10000000),
+        ]})
+        self.voucher(15520000, date='2026-01-15')
+        self.voucher(872400, date='2026-01-20', debit='5602', credit='1002')
+        self.voucher(420, date='2026-01-21', debit='1002', credit='5603')
+        report = self.call(method='GET', period='2026-09')['reports']['statutory']
+        self.assertEqual('会小企01表', report['balance_sheet']['form_no'])
+        self.assertEqual('会小企02表', report['profit']['form_no'])
+        self.assertEqual('2026-09-30', report['date'])
+        self.assertTrue(report['balanced'])
+        self.assertEqual(0, report['difference_fen'])
+        sheet = report['balance_sheet']['rows']
+        cash = self.statutory_row(sheet, 1, 'asset')
+        capital = self.statutory_row(sheet, 48, 'equity')
+        retained = self.statutory_row(sheet, 51, 'equity')
+        total_asset = self.statutory_row(sheet, 30, 'asset')
+        total_claim = self.statutory_row(sheet, 53, 'equity')
+        self.assertEqual(24648020, cash['asset_ending_fen'])
+        self.assertEqual(10000000, cash['asset_begin_fen'])
+        self.assertIsNone(self.statutory_row(sheet, 2, 'asset')['asset_ending_fen'])
+        self.assertEqual(10000000, capital['equity_ending_fen'])
+        self.assertEqual(10000000, capital['equity_begin_fen'])
+        self.assertEqual(14648020, retained['equity_ending_fen'])
+        self.assertIsNone(retained['equity_begin_fen'])
+        self.assertEqual(24648020, total_asset['asset_ending_fen'])
+        self.assertEqual(10000000, total_asset['asset_begin_fen'])
+        self.assertEqual(24648020, total_claim['equity_ending_fen'])
+        self.assertEqual(10000000, total_claim['equity_begin_fen'])
+        profit = report['profit']['rows']
+        revenue = self.profit_row(profit, 1)
+        admin = self.profit_row(profit, 14)
+        finance_row = self.profit_row(profit, 18)
+        interest = self.profit_row(profit, 19)
+        operating = self.profit_row(profit, 21)
+        total = self.profit_row(profit, 30)
+        net = self.profit_row(profit, 32)
+        self.assertIsNone(revenue['month_fen'])
+        self.assertEqual(15520000, revenue['ytd_fen'])
+        self.assertEqual(872400, admin['ytd_fen'])
+        self.assertEqual(-420, finance_row['ytd_fen'])
+        self.assertEqual(-420, interest['ytd_fen'])
+        self.assertIsNone(interest['month_fen'])
+        for row in (operating, total, net):
+            self.assertEqual(0, row['month_fen'])
+            self.assertEqual(14648020, row['ytd_fen'])
+        self.review_all()
+        self.call('close', {'period': '2026-01'})
+        closed = self.call(method='GET', period='2026-09')['reports']['statutory']
+        self.assertTrue(closed['balanced'])
+        self.assertEqual(14648020, self.profit_row(closed['profit']['rows'], 32)['ytd_fen'])
+        self.assertEqual(14648020, self.statutory_row(closed['balance_sheet']['rows'], 51, 'equity')['equity_ending_fen'])
+
+    def test_statutory_year_begin_is_zero_when_the_book_opens_after_january(self):
+        with self.conn:
+            self.conn.execute("UPDATE clients SET start_period='2026-06' WHERE id=1")
+        self.call('opening', {'version': 1, 'balances': [
+            finance._entry('1002', 500000), finance._entry('3001', credit=500000),
+        ]})
+        self.voucher(100, date='2026-06-15')
+        report = self.call(method='GET', period='2026-06')['reports']['statutory']
+        cash = self.statutory_row(report['balance_sheet']['rows'], 1, 'asset')
+        total = self.statutory_row(report['balance_sheet']['rows'], 30, 'asset')
+        self.assertIsNone(cash['asset_begin_fen'])
+        self.assertEqual(500100, cash['asset_ending_fen'])
+        self.assertEqual(0, total['asset_begin_fen'])
+        self.assertTrue(report['balanced'])
+
+    def test_enterprise_statutory_uses_revenue_and_stays_balanced(self):
+        self.voucher(8800, cid=2)
+        report = self.call(method='GET', cid=2)['reports']['statutory']
+        self.assertEqual('管理用表', report['balance_sheet']['form_no'])
+        self.assertTrue(report['balanced'])
+        self.assertEqual(8800, self.profit_row(report['profit']['rows'], 1)['ytd_fen'])
+
 
 if __name__=='__main__': unittest.main()

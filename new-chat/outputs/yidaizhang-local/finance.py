@@ -20,6 +20,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from db import ApiError, amount, audit, now
 from client_profile import expand_client
+from statutory_statements import build_statutory
 
 
 CASH_CATEGORIES = ('operating', 'investing', 'financing', 'transfer', 'unclassified')
@@ -1131,11 +1132,13 @@ def _reports(conn,cid,period,trial):
     if unclosed: bsrows.append({'key':'unclosed_profit','name':'未结转损益','amount_fen':unclosed})
     plkeys=list(dict.fromkeys(list(pl)+list(ytd)))
     plrows=[{'key':k,'name':REPORT_KEYS.get(k,k),'amount_fen':pl.get(k,0),'ytd_fen':ytd.get(k,0)} for k in plkeys]
+    client=_client(conn,cid)
     return {'balance_sheet':{'rows':bsrows,'assets_fen':assets,'liabilities_fen':liabilities,'equity_fen':equity,'unclosed_profit_fen':unclosed,'balanced':assets==liabilities+equity,
                 'basis':'科目余额管理报表；往来重分类、减值/递延税等调整须由会计录入并复核，不替代法定列报。'},
             'profit_loss':{'rows':plrows,'income_fen':income,'expense_fen':expense,'profit_fen':income-expense,'ytd_profit_fen':yi-ye},
             'cash_flow':{'rows':list(cash.values()),'net_fen':sum(x['net_fen'] for x in cash.values()),'unclassified_count':unclassified,'complete':unclassified==0,
-                'basis':'人工逐笔分类的货币资金收支汇总，内部转账净额必须为零；未分类时不能作为完整现金流量表。'}}
+                'basis':'人工逐笔分类的货币资金收支汇总，内部转账净额必须为零；未分类时不能作为完整现金流量表。'},
+            'statutory':build_statutory(conn,client,period,trial)}
 
 
 def _asset_rows(conn,cid,period):

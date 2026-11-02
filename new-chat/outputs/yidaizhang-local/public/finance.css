@@ -28,3 +28,20 @@
 .modal-body:has(.opening-editor) :is(.field,.field>span,input,select,.muted,.opening-editor td){color:#000}
 .modal .opening-editor th{color:#000;font-size:14px;font-weight:600}
 .modal .opening-editor input::placeholder{color:#000;opacity:1}
+.period-check-message,.period-check-level{cursor:help}
+.period-check-popup{position:fixed;z-index:80;box-sizing:border-box;width:min(880px,calc(100vw - 32px));max-height:min(70vh,640px);overflow:auto;padding:14px 16px;background:#fff;border:1px solid #d7deea;border-radius:10px;box-shadow:0 16px 40px rgba(20,32,51,.18);color:#1d2430}
+.period-check-popup[hidden]{display:none!important}
+.period-check-heading{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:8px}
+.period-check-heading small,.period-check-footer{color:#667085;font-size:12px}
+.period-check-where,.period-check-reason,.period-check-next{margin:8px 0;line-height:1.5}
+.period-check-grid{overflow:auto;max-height:280px;border:1px solid #e6ebf2;border-radius:8px}
+.period-check-grid table{width:100%;border-collapse:collapse;font-size:13px}
+.period-check-grid th,.period-check-grid td{padding:6px 8px;border-bottom:1px solid #eef2f6;text-align:left;white-space:nowrap}
+.period-check-grid td.number{text-align:right;font-variant-numeric:tabular-nums}
+.period-check-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:10px}
+.period-check-open{border:1px solid #c5d0e0;background:#f7f9fc;border-radius:6px;padding:4px 8px;cursor:pointer}
+.period-check-hint{margin-left:8px;color:#667085;font-size:12px}
+.statutory-sheet{overflow:auto}
+.statutory-sheet table{min-width:920px}
+.statutory-notes{margin:12px 0 0;color:#667085;font-size:12px}
+.statutory-notes li{margin:4px 0}

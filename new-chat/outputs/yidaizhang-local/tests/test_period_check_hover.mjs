@@ -116,6 +116,9 @@ test('details render safe text, readable money and accessible hidden popups', t 
   assert.match(popup.textContent, /1,234\.56/);
   assert.match(popup.textContent, /-8\.90/);
   assert.match(popup.textContent, /3/, 'The total count remains visible when only a sample is supplied.');
+  assert.match(popup.textContent, /问题位置：需要处理：第一条/);
+  assert.match(f.triggers(0)[1].getAttribute('title'), /需要处理：第一条/);
+  assert.match(f.popup(1).textContent, /需要人工复核：银行付款/);
   for (const element of f.content.querySelectorAll('*')) {
     assert.ok([...element.attributes].every(attr => !/^on/i.test(attr.name)), 'User text cannot inject event attributes.');
   }
