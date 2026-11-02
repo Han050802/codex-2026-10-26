@@ -4,6 +4,7 @@ import { renderCompanyVouchers, bindCompanyVouchers, focusCompanyVoucher, resetC
 import { renderCompanyBalance, bindCompanyBalance, clearCompanyBalanceRoute } from './company-balance.js';
 import { renderReconcile, bindReconcile, setReconcileCompany } from './reconcile.js';
 import { openSourceArchive } from './source-archive.js';
+import { renderPeriodCheckRows, bindPeriodCheckDetails, clearPeriodCheckDetails } from './period-checks.js';
 let book = null;
 let activeView = 'home';
 let requestedView = null;
@@ -119,6 +120,7 @@ async function runMaintenanceDelete(scope,ctx){
 }
 
 export async function renderBook(clientId,period,ctx) {
+  clearPeriodCheckDetails();
   setReconcileCompany(ctx.clients?.find(client=>Number(client.id)===Number(clientId)));
   if(activeClient!==Number(clientId)){activeView=requestedView||'home';ledgerAccount='';activeClient=Number(clientId);}
   requestedView=null;bookContext=ctx;
@@ -136,7 +138,7 @@ function renderAssets(){return actionbar('固定资产卡片',button('新增固�
 function renderInventory(){return actionbar('库存商品',button('新增商品','new-item','',true)+button('入库 / 出库','inventory-move'),'采用移动加权平均成本；不允许负库存，已发生后续移动的商品不接受倒序入账。')+table(['商品编码','商品名称','单位','结存数量','结存成本','存货科目','成本科目'],book.inventory_items.map(i=>`<tr><td>${h(i.sku)}</td><td>${h(i.name)}</td><td>${h(i.unit)}</td><td class="number">${h(i.quantity)}</td><td class="number">${money(i.value_fen)}</td><td>${h(i.inventory_account)}</td><td>${h(i.cost_account)}</td></tr>`))+'<div class="book-section-gap"></div>'+actionbar('库存出入库记录','')+table(['日期','商品','方向','数量','成本金额','状态','关联凭证'],book.inventory_movements.map(m=>`<tr class="${m.status==='void'?'book-void':''}"><td>${h(m.date)}</td><td>${h(m.item_name||m.item_id)}</td><td>${statusBadge(m.direction==='in'?'入库':'出库',m.direction==='in'?'success':'pending')}</td><td class="number">${h(m.quantity)}</td><td class="number">${money(m.amount_fen)}</td><td>${m.status==='void'?'已撤回':'有效'}</td><td>${m.voucher_id?`#${m.voucher_id}`:'—'}</td></tr>`));}
 function renderPayroll(){let gross=0,net=0;book.payroll.forEach(p=>{gross+=p.gross_fen;net+=p.net_fen;});return actionbar('工资表',button('新增工资记录','new-payroll','',true)+button('生成工资计提凭证','post-payroll')+button('登记工资发放','pay-payroll'),'个税、社保和其他扣款由会计录入；系统计算实发，不自动推算个人所得税。')+table(['所属期间','员工姓名','应发工资','代扣个税','个人社保','其他扣款','实发工资','计提凭证','发放凭证','操作'],book.payroll.map(p=>`<tr><td>${h(p.period)}</td><td>${h(p.employee_name)}</td>${['gross_fen','withheld_tax_fen','social_fen','other_deduction_fen','net_fen'].map(k=>`<td class="number">${money(p[k])}</td>`).join('')}<td>${p.voucher_id?`#${p.voucher_id}`:statusBadge('待计提','pending')}</td><td>${p.payment_voucher_id?`#${p.payment_voucher_id}`:'未登记发放'}</td><td>${!p.voucher_id?button('删除重录','delete-payroll',`data-id="${p.id}"`):'需先撤回来源凭证后纠错'}</td></tr>`))+`<p class="book-totals">应发合计 ${money(gross)}　实发合计 ${money(net)}</p><p class="muted">计提和实发分别生成凭证。实际转账及缴纳须在外部办理；发放时生成的代扣负债，可在资金日记账继续登记缴纳。</p>`;}
 function renderJournals(){return actionbar('资金日记账',button('新增流水','new-journal','',true)+button('导入流水','import-bank')+`<a class="btn" href="/api/templates/bank.csv">下载模板</a>`+exportLink('bank','导出流水'),'流水与凭证一一关联；录入流水后需确认生成凭证，支持实际资金活动分类。')+table(['日期','摘要','资金科目','对方科目','收支','金额','活动分类','凭证','操作'],book.journals.map(j=>`<tr><td>${h(j.date)}</td><td>${h(j.summary)}</td><td>${h(j.bank_account)}</td><td>${h(j.counter_account)}</td><td>${j.direction==='income'?'收入':'支出'}</td><td class="number">${money(j.amount_fen)}</td><td>${h(CF.find(x=>x[0]===j.cashflow_category)?.[1]||'待分类')}</td><td>${j.voucher_id?'#'+j.voucher_id:'待生成'}</td><td>${j.voucher_id?'—':button('生成凭证','post-journal',`data-id="${j.id}"`)}</td></tr>`));}
-function renderPeriod(){return actionbar('期末检查与结账',button('重新检查','refresh')+button('本期结账','close-period','',true)+button('反结账','reopen-period'),'结账前检查借贷平衡及资料完整性，自动结转损益；结账后锁定该期间。')+table(['检查级别','检查事项'],book.checks.map(c=>`<tr><td>${statusBadge({error:'需处理',warning:'请复核',info:'提示'}[c.severity]||c.severity,c.severity==='error'?'danger':c.severity==='warning'?'pending':'success')}</td><td>${h(c.message)}</td></tr>`),'当前没有发现检查异常')+'<div class="book-section-gap"></div>'+actionbar('期间状态','')+table(['会计期间','状态'],book.periods.map(p=>`<tr><td>${h(p.period)}</td><td>${statusBadge(p.closed?'已结账':'未结账',p.closed?'success':'pending')}</td></tr>`));}
+function renderPeriod(){return actionbar('期末检查与结账',button('重新检查','refresh')+button('本期结账','close-period','',true)+button('反结账','reopen-period'),'结账前检查借贷平衡及资料完整性，自动结转损益；结账后锁定该期间。')+table(['检查级别','检查事项'],renderPeriodCheckRows(book),'当前没有发现检查异常')+'<div class="book-section-gap"></div>'+actionbar('期间状态','')+table(['会计期间','状态'],book.periods.map(p=>`<tr><td>${h(p.period)}</td><td>${statusBadge(p.closed?'已结账':'未结账',p.closed?'success':'pending')}</td></tr>`));}
 
 export function bindBook(container,ctx){
   const shell=container.querySelector('.cw-shell');if(!shell||bookBindings.has(shell))return;bookBindings.add(shell);
@@ -163,8 +165,8 @@ export function bindBook(container,ctx){
   else if(activeView==='ledger')bindCompanyBalance(container,book,ctx,actions);
   else if(activeView!=='home')bindBookContent(container,ctx);
 }
-function repaint(container,ctx){container.innerHTML=renderCompanyWorkspace(book,ctx,{view:activeView,content:renderView()});bindBook(container,ctx);}
-function bindBookContent(container,ctx){container.querySelector('.book-content').querySelectorAll('[data-book-action]').forEach(el=>{if(!el.closest('[data-book-maintenance-scope]'))el.addEventListener('click',()=>performAction(el.dataset.bookAction,Number(el.dataset.id),ctx).catch(err=>ctx.toast(err.message,'error')));});container.querySelector('[data-ledger-account]')?.addEventListener('change',e=>{ledgerAccount=e.target.value;repaint(container,ctx);});bindMaintenance(container.querySelector('.book-content'),ctx);}
+function repaint(container,ctx){clearPeriodCheckDetails();container.innerHTML=renderCompanyWorkspace(book,ctx,{view:activeView,content:renderView()});bindBook(container,ctx);}
+function bindBookContent(container,ctx){container.querySelector('.book-content').querySelectorAll('[data-book-action]').forEach(el=>{if(!el.closest('[data-book-maintenance-scope]'))el.addEventListener('click',()=>performAction(el.dataset.bookAction,Number(el.dataset.id),ctx).catch(err=>ctx.toast(err.message,'error')));});container.querySelector('[data-ledger-account]')?.addEventListener('change',e=>{ledgerAccount=e.target.value;repaint(container,ctx);});bindMaintenance(container.querySelector('.book-content'),ctx);bindPeriodCheckDetails(container.querySelector('.book-content'));}
 async function save(ctx,url,body,method='POST'){const r=await ctx.api(url,{method,body});ctx.toast('已保存');await ctx.reload();return r;}
 function base(){return `/api/books/${book.client.id}`;}
 function formObject(form){return Object.fromEntries(new FormData(form).entries());}

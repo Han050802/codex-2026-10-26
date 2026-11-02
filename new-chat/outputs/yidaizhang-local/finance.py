@@ -1152,7 +1152,88 @@ def _asset_rows(conn,cid,period):
     return rows
 
 
-def _checks(conn,cid,period,trial=None,reports=None):
+def _period_check_details(conn,cid,period,trial,check,asset_cards):
+    """Read-only evidence for the selected book/period; keep close audits compact."""
+    def details(reason,action,columns,rows,total=None):
+        rows=[dict(row) for row in rows]
+        total=len(rows) if total is None else total
+        return {'reason':reason,'action':action,
+                'columns':[dict(key=c[0],label=c[1],**({'format':c[2]} if len(c)>2 else {})) for c in columns],
+                'rows':rows[:100],'total':total,'truncated':total>min(len(rows),100)}
+
+    def records(sql,params):
+        total=conn.execute('SELECT COUNT(*) FROM ('+sql+')',params).fetchone()[0]
+        return [dict(row) for row in conn.execute(sql+' LIMIT 100',params)],total
+
+    code=check['code']
+    if code=='review':
+        rows,total=records('''SELECT v.id voucher_id,v.number,v.date,v.summary,
+            COALESCE(SUM(l.debit_fen),0) amount_fen,
+            GROUP_CONCAT(DISTINCT l.account_code||' '||a.name) accounts
+            FROM vouchers v LEFT JOIN voucher_lines l ON l.voucher_id=v.id AND l.client_id=v.client_id
+            LEFT JOIN accounts a ON a.client_id=l.client_id AND a.code=l.account_code
+            WHERE v.client_id=? AND v.period=? AND v.status='active' AND v.reviewed=0
+            GROUP BY v.id ORDER BY v.number,v.id''',(cid,period))
+        for row in rows: row['voucher_number']=f'记-{row["number"]:03d}'
+        return details(f'{period}期间仍有有效凭证未审核，结账前须完成审核。',
+                       '在“凭证”中按凭证字号核对摘要、科目和金额，确认无误后审核；有误时先更正凭证。',
+                       [('voucher_number','凭证字号'),('date','日期'),('summary','摘要'),('accounts','会计科目'),('amount_fen','凭证金额','money')],rows,total)
+    if code=='cashflow':
+        rows,total=records('''SELECT v.id voucher_id,l.id line_id,v.number,v.date,
+            COALESCE(NULLIF(l.summary,''),v.summary) summary,l.account_code,a.name account_name,l.debit_fen,l.credit_fen
+            FROM voucher_lines l JOIN vouchers v ON v.id=l.voucher_id
+            JOIN accounts a ON a.client_id=l.client_id AND a.code=l.account_code
+            WHERE v.client_id=? AND l.client_id=? AND v.period=? AND v.status='active'
+              AND a.report_key='cash' AND l.cashflow_category='unclassified' ORDER BY v.number,l.id''',(cid,cid,period))
+        for row in rows: row['voucher_number']=f'记-{row["number"]:03d}'
+        return details(f'{period}期间以下货币资金分录尚未指定现金流活动类别，现金流报告因此不完整。',
+                       '在“凭证”的“资金分类”中，逐笔选择经营、投资、筹资或内部转账活动，再重新检查。',
+                       [('voucher_number','凭证字号'),('date','日期'),('summary','摘要'),('account_code','科目编码'),('account_name','科目名称'),('debit_fen','借方金额','money'),('credit_fen','贷方金额','money')],rows,total)
+    if code=='journal':
+        rows,total=records('''SELECT id journal_id,date,summary,bank_account,counter_account,
+            CASE WHEN direction='income' THEN '收入' ELSE '支出' END direction,amount_fen
+            FROM journals WHERE client_id=? AND period=? AND voucher_id IS NULL ORDER BY date,id''',(cid,period))
+        return details(f'{period}期间以下银行日记账尚未关联记账凭证。',
+                       '在“日记账”中核对收支方向、银行科目、对方科目和金额，确认后生成凭证。',
+                       [('date','日期'),('summary','摘要'),('bank_account','银行科目'),('counter_account','对方科目'),('direction','收支方向'),('amount_fen','金额','money')],rows,total)
+    if code=='payroll':
+        rows,total=records('''SELECT id payroll_id,period,employee_name,gross_fen,net_fen,expense_account
+            FROM payroll WHERE client_id=? AND period=? AND voucher_id IS NULL ORDER BY employee_name,id''',(cid,period))
+        return details(f'{period}期间以下工资记录尚未生成计提凭证。',
+                       '在“工资”中核对员工、应发工资、扣款和费用科目，完成本期工资计提后重新检查。',
+                       [('period','期间'),('employee_name','员工'),('gross_fen','应发工资','money'),('net_fen','实发工资','money'),('expense_account','费用科目')],rows,total)
+    if code=='depreciation':
+        rows=[{'asset_id':a['id'],'name':a['name'],'purchase_date':a['purchase_date'],'start_period':a['start_period'],
+               'cost_fen':a['cost_fen'],'accumulated_fen':a['accumulated_fen'],'net_fen':a['net_fen'],'expense_account':a['expense_account']}
+              for a in asset_cards if a['status']=='active' and a['start_period']<=period
+              and (not a['disposal_date'] or a['disposal_date'][:7]>=period) and a['net_fen']>a['residual_fen']
+              and not any(d['period']==period for d in a['depreciations'])]
+        return details(f'以下资产已到起提月份，且截至{period}仍有可折旧余额，本期尚无折旧计提记录。',
+                       '在“固定资产”中核对资产卡片并计提本月折旧；存在漏提月份时须从以前月份按月补提。',
+                       [('name','资产名称'),('purchase_date','购置日期'),('start_period','起提月份'),('cost_fen','原值','money'),('accumulated_fen','累计折旧','money'),('net_fen','净值','money'),('expense_account','费用科目')],rows)
+    if code=='trial':
+        debit=sum(r['closing_debit_fen'] for r in trial); credit=sum(r['closing_credit_fen'] for r in trial)
+        rows=[r for r in trial if r['closing_debit_fen'] or r['closing_credit_fen']]
+        return details(f'截至{period}的期末借方余额合计{Decimal(debit)/100:.2f}元、贷方余额合计{Decimal(credit)/100:.2f}元，差额{Decimal(debit-credit)/100:.2f}元。以下列出非零余额科目供核对。',
+                       '在“科目余额表”核对期初余额和本期凭证，查明并更正借贷差额后重新检查。',
+                       [('account_code','科目编码'),('account_name','科目名称'),('closing_debit_fen','期末借方','money'),('closing_credit_fen','期末贷方','money')],rows)
+    if code in ('inventory','asset_balance'):
+        account=check['account_code']; account_name=next((r['account_name'] for r in trial if r['account_code']==account),'')
+        gl=sum(r['closing_debit_fen']-r['closing_credit_fen'] for r in trial if r['account_code']==account)
+        if code=='inventory':
+            expected=conn.execute("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN amount_fen ELSE -amount_fen END),0) FROM inventory_movements m JOIN inventory_items i ON i.id=m.item_id WHERE i.client_id=? AND i.inventory_account=? AND m.status='active' AND substr(m.date,1,7)<=?",(cid,account,period)).fetchone()[0]
+            basis='存货数量台账'; action='在“存货”核对出入库记录及其凭证，并与“科目余额表”核对；查明差额并更正后重新检查。'
+        else:
+            expected=sum((a['cost_fen'] if a['asset_account']==account else 0)-(a['accumulated_fen'] if a['depreciation_account']==account else 0) for a in asset_cards if a['status']=='active')
+            basis='资产卡片'; action='在“固定资产”核对购置、折旧和处置记录及其凭证，并与“科目余额表”核对；更正后重新检查。'
+        return details(f'截至{period}，科目{account}的总账余额与{basis}余额不一致。以下金额均按借方减贷方列示，负数表示贷方余额。',action,
+                       [('account_code','科目编码'),('account_name','科目名称'),('ledger_fen','总账余额','money'),('subledger_fen',basis+'余额','money'),('difference_fen','差额','money')],
+                       [{'account_code':account,'account_name':account_name,'ledger_fen':gl,'subledger_fen':expected,'difference_fen':gl-expected}])
+    return details(f'{period}期间本地账务检查通过，未发现当前检查范围内的待处理项目。',
+                   '可按业务安排进行本期结账；此结果不代表税局或外部机构审核。',[],[])
+
+
+def _checks(conn,cid,period,trial=None,reports=None,include_details=False):
     trial=trial if trial is not None else _trial(conn,cid,period)
     reports=reports if reports is not None else _reports(conn,cid,period,trial)
     checks=[]
@@ -1176,14 +1257,16 @@ def _checks(conn,cid,period,trial=None,reports=None):
     for code in controls:
         value=conn.execute("SELECT COALESCE(SUM(CASE WHEN direction='in' THEN amount_fen ELSE -amount_fen END),0) FROM inventory_movements m JOIN inventory_items i ON i.id=m.item_id WHERE i.client_id=? AND i.inventory_account=? AND m.status='active' AND substr(m.date,1,7)<=?",(cid,code,period)).fetchone()[0]
         gl=sum(x['closing_debit_fen']-x['closing_credit_fen'] for x in trial if x['account_code']==code)
-        if gl!=value: checks.append({'code':'inventory','severity':'error','message':f'存货科目{code}总账与数量台账相差{gl-value}分，须核对后结账'})
+        if gl!=value: checks.append({'code':'inventory','severity':'error','account_code':code,'message':f'存货科目{code}总账与数量台账相差{gl-value}分，须核对后结账'})
     asset_cards=_asset_rows(conn,cid,period)
     asset_controls={a[k] for a in asset_cards for k in ('asset_account','depreciation_account')}
     for code in asset_controls:
         expected=sum((a['cost_fen'] if a['asset_account']==code else 0)-(a['accumulated_fen'] if a['depreciation_account']==code else 0) for a in asset_cards if a['status']=='active')
         gl=sum(r['closing_debit_fen']-r['closing_credit_fen'] for r in trial if r['account_code']==code)
-        if gl!=expected: checks.append({'code':'asset_balance','severity':'error','message':f'资产科目{code}总账与资产卡片相差{gl-expected}分，须核对后结账'})
+        if gl!=expected: checks.append({'code':'asset_balance','severity':'error','account_code':code,'message':f'资产科目{code}总账与资产卡片相差{gl-expected}分，须核对后结账'})
     if not checks: checks.append({'code':'ok','severity':'info','message':'本地账务检查通过；不代表税局或外部机构审核'})
+    if include_details:
+        for check in checks: check['details']=_period_check_details(conn,cid,period,trial,check,asset_cards)
     return checks
 
 
@@ -1215,7 +1298,7 @@ def bundle(conn,cid,period):
             'opening_version':settings[0] if settings else 1,'vouchers':vouchers,'trial_balance':trial,'trial_balance_rollup':_trial_rollup(trial),'ledger':ledger,'reports':reports,'dashboard':_dashboard(conn,cid,period,trial),
             'assets':_asset_rows(conn,cid,period),'inventory_items':inventory,'inventory_movements':[dict(x) for x in conn.execute('SELECT m.*,i.name item_name FROM inventory_movements m JOIN inventory_items i ON i.id=m.item_id WHERE m.client_id=? AND substr(m.date,1,7)=? ORDER BY m.date,m.id',(cid,period))],
             'payroll':[dict(x) for x in conn.execute('SELECT * FROM payroll WHERE client_id=? AND period=? ORDER BY employee_name',(cid,period))],
-            'periods':periods,'checks':_checks(conn,cid,period,trial,reports),'journals':[dict(x) for x in conn.execute('SELECT * FROM journals WHERE client_id=? AND period=? ORDER BY date,id',(cid,period))]}
+            'periods':periods,'checks':_checks(conn,cid,period,trial,reports,include_details=True),'journals':[dict(x) for x in conn.execute('SELECT * FROM journals WHERE client_id=? AND period=? ORDER BY date,id',(cid,period))]}
 
 
 def _opening(conn,cid,payload,user):
